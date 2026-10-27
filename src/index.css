@@ -1,0 +1,207 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+/* Brand palette (from the approved reference) */
+:root {
+  --cream: #fff9ef;
+  --oat: #f1e4ce;
+  --terracotta: #d76543;
+  --sage: #74866b;
+  --saffron: #e8b95d;
+  --charcoal: #292c25;
+
+  /* Semantic tokens: light */
+  --bg: #fff9ef;
+  --surface: #fffdf8;
+  --surface-2: #f6ecd9;
+  --ink: #292c25;
+  --ink-soft: #5a5d50;
+  --line: #e6d8bf;
+  --good: #4f6b45;
+  --good-soft: #e3ecd9;
+  --warn: #8a5a00;
+  --warn-soft: #fbe9c3;
+  --bad: #a63a22;
+  --bad-soft: #f8dcd2;
+  --shadow: 0 1px 2px rgb(80 50 20 / 0.06), 0 8px 24px -8px rgb(80 50 20 / 0.18);
+
+  /* Accent (terracotta default). --accent carries white text at AA. */
+  --accent: #c0502f;
+  --accent-hover: #a94426;
+  --accent-bright: #d76543;
+  --accent-ink: #ffffff;
+  --accent-soft: #fbe3d9;
+  --accent-text: #a8431f;
+
+  --motion-scale: 1;
+}
+
+:root[data-accent='sage'] {
+  --accent: #55704c;
+  --accent-hover: #465e3f;
+  --accent-bright: #74866b;
+  --accent-soft: #e3ecd9;
+  --accent-text: #3f5a38;
+}
+:root[data-accent='saffron'] {
+  --accent: #e8b95d;
+  --accent-hover: #dba746;
+  --accent-bright: #e8b95d;
+  --accent-ink: #292c25;
+  --accent-soft: #fbefcf;
+  --accent-text: #7a5300;
+}
+:root[data-accent='plum'] {
+  --accent: #8a4a68;
+  --accent-hover: #743d57;
+  --accent-bright: #a8627f;
+  --accent-soft: #f3dfe8;
+  --accent-text: #7a3f5a;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #1d1f1a;
+  --surface: #272a23;
+  --surface-2: #31352c;
+  --ink: #f7efe0;
+  --ink-soft: #c2bba8;
+  --line: #3f4437;
+  --good: #a9c79b;
+  --good-soft: #2f3d2a;
+  --warn: #f0c978;
+  --warn-soft: #43361a;
+  --bad: #f0a592;
+  --bad-soft: #4a2a21;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.6);
+  --accent-soft: #4a2c22;
+  --accent-text: #f2a58c;
+}
+:root[data-theme='dark'][data-accent='sage'] {
+  --accent: #8fa985;
+  --accent-hover: #a2bb98;
+  --accent-ink: #1d1f1a;
+  --accent-soft: #2f3d2a;
+  --accent-text: #b5ceaa;
+}
+:root[data-theme='dark'][data-accent='saffron'] {
+  --accent-soft: #43361a;
+  --accent-text: #f0c978;
+}
+:root[data-theme='dark'][data-accent='plum'] {
+  --accent: #b9728f;
+  --accent-hover: #c987a1;
+  --accent-ink: #1d1f1a;
+  --accent-soft: #422836;
+  --accent-text: #e5a9c0;
+}
+
+@theme inline {
+  --color-cream: var(--cream);
+  --color-oat: var(--oat);
+  --color-terracotta: var(--terracotta);
+  --color-sage: var(--sage);
+  --color-saffron: var(--saffron);
+  --color-charcoal: var(--charcoal);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-bright: var(--accent-bright);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --shadow-card: var(--shadow);
+  --radius-card: 1.5rem;
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-optical-sizing: auto;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  :focus-visible {
+    outline: 3px solid var(--accent-bright);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+  button,
+  a,
+  [role='tab'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer components {
+  .pp-card {
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+  .pp-pattern {
+    background-image:
+      radial-gradient(
+        circle at 20% 20%,
+        color-mix(in srgb, var(--sage) 14%, transparent) 0 2px,
+        transparent 3px
+      ),
+      radial-gradient(
+        circle at 70% 60%,
+        color-mix(in srgb, var(--accent-bright) 12%, transparent) 0 2px,
+        transparent 3px
+      );
+    background-size:
+      44px 44px,
+      56px 56px;
+  }
+}
+
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
