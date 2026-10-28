@@ -179,7 +179,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="mb-5 flex items-start gap-3">
+    <header className="mb-5 flex items-start gap-3 lg:rounded-3xl lg:border lg:border-line lg:bg-surface lg:px-5 lg:py-4 lg:shadow-card">
       {back && (
         <Link
           to={back}

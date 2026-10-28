@@ -256,3 +256,38 @@ test('screenshots for design review', async ({ page }) => {
     await page.screenshot({ path: `screenshots/${r}-390.png`, fullPage: true });
   }
 });
+
+test.describe('sample content', () => {
+  test('is labelled, previews recipes, and can be turned off to show real empty states', async ({
+    page,
+  }) => {
+    await seedOnboarded(page, { sampleContent: true });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    await expect(page.getByText('SAMPLE').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Creamy Tomato Pasta' })).toBeVisible();
+    await page.getByRole('link', { name: /Creamy Tomato Pasta/ }).click();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Creamy Tomato Pasta' }),
+    ).toBeVisible();
+
+    await page.goto('/settings');
+    await page.getByRole('button', { name: 'Sample content: on' }).click();
+    await page.goto('/');
+    await expect(page.getByText('SAMPLE')).toHaveCount(0);
+    await expect(page.getByText('Nothing logged with a date yet.')).toBeVisible();
+    await page.goto('/recipes');
+    await expect(page.getByText('No recipes yet')).toBeVisible();
+  });
+
+  test('onboarding offers sample or empty and stores the choice', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('radio', { name: 'Empty kitchen' }).click();
+    await page.getByRole('button', { name: 'Start cooking' }).click();
+    await expect(page.getByText('SAMPLE')).toHaveCount(0);
+    const stored = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!), PREFS_KEY);
+    expect(stored.sampleContent).toBe(false);
+  });
+});

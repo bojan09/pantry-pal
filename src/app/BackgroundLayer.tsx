@@ -20,6 +20,9 @@ export function BackgroundLayer() {
 
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden bg-bg">
+      {prefs.background === 'kitchen' && (
+        <div className="pp-wood absolute inset-0 hidden lg:block" />
+      )}
       {prefs.background === 'pattern' && <div className="pp-pattern absolute inset-0" />}
       {prefs.background === 'botanical' && (
         <>

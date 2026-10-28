@@ -153,7 +153,7 @@ export function SettingsPage() {
               value={prefs.background}
               options={BACKGROUNDS.map((b) => ({
                 value: b,
-                label: b === 'solid' ? 'Cream' : cap(b),
+                label: b === 'solid' ? 'Cream' : b === 'kitchen' ? 'Kitchen' : cap(b),
               }))}
               onChange={set('background')}
             />
@@ -282,6 +282,19 @@ export function SettingsPage() {
               medical or safety advice.
             </p>
           </div>
+        </Group>
+
+        <Group title="Sample content">
+          <p className="text-sm text-ink-soft">
+            Shows illustrative recipes, expiring items and a meal plan, clearly labelled SAMPLE, so
+            you can preview the app. It is not stored and never counted as your data.
+          </p>
+          <Chip
+            selected={prefs.sampleContent}
+            onClick={() => update({ sampleContent: !prefs.sampleContent })}
+          >
+            {prefs.sampleContent ? 'Sample content: on' : 'Sample content: off'}
+          </Chip>
         </Group>
 
         <Group title="App & data">

@@ -135,7 +135,7 @@
   }
   body {
     margin: 0;
-    background: var(--bg);
+    background: transparent; /* html paints --bg; a body background would cover the fixed BackgroundLayer */
     color: var(--ink);
     font-family: var(--font-sans);
     font-size: 16px;
@@ -169,6 +169,16 @@
     border: 1px solid var(--line);
     border-radius: var(--radius-card);
     box-shadow: var(--shadow-card);
+  }
+  .pp-wood {
+    background:
+      linear-gradient(180deg, rgb(255 236 200 / 0.18), rgb(60 30 10 / 0.18)),
+      repeating-linear-gradient(90deg, transparent 0 118px, rgb(70 40 15 / 0.35) 118px 120px),
+      repeating-linear-gradient(0deg, rgb(255 255 255 / 0.04) 0 3px, rgb(0 0 0 / 0.04) 3px 6px),
+      #a8743f;
+  }
+  :root[data-theme='dark'] .pp-wood {
+    filter: brightness(0.45) saturate(0.9);
   }
   .pp-pattern {
     background-image:

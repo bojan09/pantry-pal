@@ -148,6 +148,21 @@ export function Onboarding() {
               </div>
               <p className="text-sm text-ink-soft">Informational only. Not medical advice.</p>
             </div>
+            <div className="grid gap-2">
+              <span className="text-sm font-semibold">Start with</span>
+              <Segmented
+                label="Start with"
+                value={prefs.sampleContent ? 'sample' : 'empty'}
+                options={[
+                  { value: 'sample', label: 'Sample content' },
+                  { value: 'empty', label: 'Empty kitchen' },
+                ]}
+                onChange={(v) => update({ sampleContent: v === 'sample' })}
+              />
+              <p className="text-sm text-ink-soft">
+                Sample content is illustrative, labelled SAMPLE, and can be turned off in Settings.
+              </p>
+            </div>
           </div>
         )}
 

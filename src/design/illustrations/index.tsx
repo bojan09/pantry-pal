@@ -123,35 +123,5 @@ export function BotanicalCorner(props: P) {
   );
 }
 
-export type Zone = 'pantry' | 'fridge' | 'freezer';
-
-/**
- * Illustrated storage scene. Phase 1 renders empty shelves only: it must never
- * imply stock the user has not logged.
- */
-export function StorageScene({ zone, className }: { zone: Zone; className?: string }) {
-  const frame = zone === 'pantry' ? '#8A5A32' : '#DCE3E0';
-  const inside = zone === 'pantry' ? '#F1E4CE' : zone === 'fridge' ? '#EEF3F1' : '#E1ECF1';
-  const shelf = zone === 'pantry' ? '#B07A45' : '#C4CFCB';
-  return (
-    <svg
-      viewBox="0 0 400 220"
-      className={className}
-      role="img"
-      aria-label={`Empty ${zone} shelves`}
-    >
-      <rect x="6" y="6" width="388" height="208" rx="16" fill={frame} />
-      <rect x="18" y="18" width="364" height="184" rx="10" fill={inside} />
-      {[78, 138].map((y) => (
-        <rect key={y} x="18" y={y} width="364" height="9" fill={shelf} />
-      ))}
-      <rect x="18" y="195" width="364" height="9" fill={shelf} />
-      {zone === 'freezer' && (
-        <g stroke="#9DB7C4" strokeWidth="2" strokeLinecap="round" opacity=".7">
-          <path d="M60 40l10 10M70 40l-10 10M330 100l10 10M340 100l-10 10M200 160l8 8M208 160l-8 8" />
-        </g>
-      )}
-      {zone === 'pantry' && <Sprig x="318" y="108" width="54" height="80" />}
-    </svg>
-  );
-}
+export { StorageScene, KitchenBackdrop, SidebarArt, FoodThumb, type Zone } from './scenes';
+export { Art, type ArtKey } from './food';

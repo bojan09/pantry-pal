@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const ACCENTS = ['terracotta', 'sage', 'saffron', 'plum'] as const;
-export const BACKGROUNDS = ['solid', 'pattern', 'botanical', 'custom'] as const;
+export const BACKGROUNDS = ['kitchen', 'solid', 'pattern', 'botanical', 'custom'] as const;
 export const MOTION_LEVELS = ['low', 'balanced', 'cinematic'] as const;
 export const THEMES = ['light', 'dark', 'system'] as const;
 export const CURRENCIES = ['MKD', 'EUR', 'USD', 'GBP', 'CHF', 'RSD'] as const;
@@ -23,7 +23,9 @@ export const prefsSchema = z.object({
   name: z.string().trim().max(40).default(''),
   theme: z.enum(THEMES).default('light'),
   accent: z.enum(ACCENTS).default('terracotta'),
-  background: z.enum(BACKGROUNDS).default('botanical'),
+  background: z.enum(BACKGROUNDS).default('kitchen'),
+  /** Shows clearly-labelled illustrative sample content instead of empty states. */
+  sampleContent: z.boolean().default(true),
   customBackgroundId: z.string().optional(),
   bgDim: z.number().min(0).max(80).default(35),
   bgBlur: z.number().min(0).max(20).default(4),
@@ -47,7 +49,11 @@ export function loadPrefs(storage: Pick<Storage, 'getItem'> | null = safeStorage
   try {
     const raw = storage?.getItem(KEY);
     if (!raw) return DEFAULT_PREFS;
-    const parsed: unknown = JSON.parse(raw);
+    let parsed: unknown = JSON.parse(raw);
+    // Prefs saved before sample content existed: adopt the new default look once.
+    if (parsed && typeof parsed === 'object' && !('sampleContent' in parsed)) {
+      parsed = { ...parsed, sampleContent: true, background: 'kitchen' };
+    }
     const whole = prefsSchema.safeParse(parsed);
     if (whole.success) return whole.data;
     if (parsed && typeof parsed === 'object') {

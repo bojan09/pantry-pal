@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Bell, Moon, Search, Sun } from 'lucide-react';
-import { Logo, Sprig } from '@/design/illustrations';
+import { Logo, SidebarArt } from '@/design/illustrations';
 import { cx, IconButton } from '@/design/ui';
 import { BOTTOM_NAV, NAV } from './nav';
 import { BackgroundLayer } from './BackgroundLayer';
@@ -42,10 +42,7 @@ function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <Sprig
-        aria-hidden
-        className="pointer-events-none absolute -bottom-2 -right-3 h-44 opacity-60"
-      />
+      <SidebarArt className="pointer-events-none absolute -bottom-3 -right-4 h-48" />
       <div className="relative mt-auto pt-4">
         <button
           type="button"
