@@ -210,6 +210,65 @@ export function createInventory(database: PantryDB = defaultDb) {
     });
   }
 
+  /**
+   * Removes exact amounts from chosen lots (each `take` is in that lot's own unit). Used when the
+   * cook picks which lots were used. Atomic like `consume`.
+   */
+  async function consumeLots(
+    ingredientId: string,
+    picks: { lotId: string; take: number }[],
+    opts: { idempotencyKey?: string; note?: string } = {},
+  ) {
+    return tx(async () => {
+      if (
+        opts.idempotencyKey &&
+        (await database.inventoryEvents.where('idempotencyKey').equals(opts.idempotencyKey).first())
+      )
+        throw new InventoryError('This action was already applied', 'duplicate');
+      const steps: { lotId: string; take: number; remaining: number }[] = [];
+      const snapshots: InventoryLot[] = [];
+      let first = true;
+      const seen = new Set<string>();
+      for (const p of picks) {
+        if (!(p.take > 0)) continue;
+        if (seen.has(p.lotId)) throw new InventoryError('A lot was chosen twice', 'invalid');
+        seen.add(p.lotId);
+        const lot = await database.inventoryLots.get(p.lotId);
+        if (!lot || lot.ingredientId !== ingredientId)
+          throw new InventoryError('A chosen lot no longer exists', 'not_found');
+        if (p.take > lot.quantity + 1e-9)
+          throw new InventoryError(
+            `Only ${formatQuantity(lot.quantity, lot.unit)} in that lot`,
+            'insufficient',
+          );
+        const remaining = tidy(Math.max(0, lot.quantity - p.take));
+        if (remaining <= 1e-9) await database.inventoryLots.delete(lot.id);
+        else
+          await database.inventoryLots.update(lot.id, {
+            quantity: remaining,
+            updatedAt: Date.now(),
+          });
+        await database.inventoryEvents.add(
+          event(lot, 'use', -p.take, {
+            note: opts.note,
+            snapshot: lot,
+            ...(first && opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}),
+          }),
+        );
+        first = false;
+        steps.push({
+          lotId: lot.id,
+          take: tidy(p.take),
+          remaining: remaining <= 1e-9 ? 0 : remaining,
+        });
+        snapshots.push(lot);
+      }
+      if (!steps.length)
+        throw new InventoryError('Choose how much to use from at least one lot', 'invalid');
+      return { steps, snapshots };
+    });
+  }
+
   /** Moves some or all of a lot to another zone. A partial move splits the lot. */
   async function transfer(
     lotId: string,
@@ -359,6 +418,7 @@ export function createInventory(database: PantryDB = defaultDb) {
     addLot,
     updateLot,
     consume,
+    consumeLots,
     transfer,
     discardLot,
     undo,

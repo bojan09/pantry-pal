@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { BookOpen, History, Layers, Plus, Search } from 'lucide-react';
-import { Card, Chip, EmptyState, inputClass, LinkButton, PageHeader } from '@/design/ui';
+import { BookOpen, FileUp, History, Layers, Plus, Search } from 'lucide-react';
+import { Button, Card, Chip, EmptyState, inputClass, LinkButton, PageHeader } from '@/design/ui';
 import {
   emptyFilters,
   matchesRecipe,
@@ -10,6 +10,7 @@ import {
   type RecipeSort,
 } from '@/domain/recipes';
 import { RecipeCard } from './RecipeCard';
+import { ImportDialog } from './ImportDialog';
 import { useRecipeLibrary } from './hooks';
 
 const TIMES = [15, 30, 45, 60];
@@ -23,6 +24,7 @@ export function RecipesPage() {
   const [params, setParams] = useSearchParams();
   const [f, setF] = useState<RecipeFilters>(emptyFilters);
   const [sort, setSort] = useState<RecipeSort>('name');
+  const [importing, setImporting] = useState(false);
   const q = params.get('q') ?? '';
   const collectionId = params.get('collection') ?? '';
   const readyOnly = params.get('ready') === '1';
@@ -77,9 +79,14 @@ export function RecipesPage() {
         title="Recipes"
         subtitle="Your cookbook, searchable offline."
         actions={
-          <LinkButton to="/recipes/new">
-            <Plus aria-hidden className="size-4" /> New recipe
-          </LinkButton>
+          <>
+            <Button variant="ghost" onClick={() => setImporting(true)}>
+              <FileUp aria-hidden className="size-4" /> Import
+            </Button>
+            <LinkButton to="/recipes/new">
+              <Plus aria-hidden className="size-4" /> New recipe
+            </LinkButton>
+          </>
         }
       />
       <div className="grid gap-4">
@@ -253,6 +260,7 @@ export function RecipesPage() {
           </Card>
         )}
       </div>
+      {importing && <ImportDialog onClose={() => setImporting(false)} />}
     </>
   );
 }

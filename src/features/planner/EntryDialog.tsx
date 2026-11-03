@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { ChevronLeft, ChevronRight, Copy, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Repeat, Trash2 } from 'lucide-react';
 import { db } from '@/data/db';
 import { planner } from '@/data/planner';
 import type { MealPlanEntry, Recipe } from '@/data/types';
@@ -49,6 +49,8 @@ export function EntryDialog({
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [repeat, setRepeat] = useState<'none' | 'day' | 'week'>('none');
+  const [repeatCount, setRepeatCount] = useState('4');
 
   const picked = recipes.find((r) => r.id === recipeId);
   const results = useMemo(() => {
@@ -102,7 +104,15 @@ export function EntryDialog({
                 }),
               'Saved',
             );
-          else void run(() => planner.addEntry(input()), 'Added to your plan');
+          else
+            void run(
+              async () => {
+                const added = await planner.addEntry(input());
+                if (repeat !== 'none')
+                  await planner.repeatEntry(added.id, repeat, Number(repeatCount));
+              },
+              repeat === 'none' ? 'Added to your plan' : 'Added and repeated',
+            );
         }}
       >
         {!editing && (
@@ -254,6 +264,41 @@ export function EntryDialog({
           </div>
         </div>
 
+        {!editing && (
+          <div className="grid gap-2 rounded-2xl border border-line p-3">
+            <label htmlFor="plan-repeat" className="flex items-center gap-2 text-sm font-semibold">
+              <Repeat aria-hidden className="size-4" /> Repeat
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <select
+                id="plan-repeat"
+                className={inputClass}
+                value={repeat}
+                onChange={(e) => setRepeat(e.target.value as typeof repeat)}
+              >
+                <option value="none">Does not repeat</option>
+                <option value="day">Every day</option>
+                <option value="week">Every week</option>
+              </select>
+              {repeat !== 'none' && (
+                <input
+                  aria-label="Number of extra repeats"
+                  inputMode="numeric"
+                  className={inputClass}
+                  value={repeatCount}
+                  onChange={(e) => setRepeatCount(e.target.value)}
+                />
+              )}
+            </div>
+            {repeat !== 'none' && (
+              <p className="text-sm text-ink-soft">
+                Adds {repeatCount || '0'} more {repeat === 'day' ? 'days' : 'weeks'} after the
+                first. Each is a normal entry you can change.
+              </p>
+            )}
+          </div>
+        )}
+
         {error && (
           <p
             role="alert"
@@ -272,6 +317,24 @@ export function EntryDialog({
               </Button>
               <Button variant="ghost" disabled={busy} onClick={() => void shiftDay(1)}>
                 Next day <ChevronRight aria-hidden className="size-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={busy}
+                onClick={() =>
+                  void run(() => planner.reorder(entry.id, -1), 'Moved earlier in this meal')
+                }
+              >
+                <ArrowUp aria-hidden className="size-4" /> Earlier in this meal
+              </Button>
+              <Button
+                variant="ghost"
+                disabled={busy}
+                onClick={() =>
+                  void run(() => planner.reorder(entry.id, 1), 'Moved later in this meal')
+                }
+              >
+                <ArrowDown aria-hidden className="size-4" /> Later in this meal
               </Button>
               <Button
                 variant="ghost"

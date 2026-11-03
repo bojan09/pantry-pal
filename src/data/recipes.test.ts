@@ -321,3 +321,81 @@ describe('availability and proposed deductions', () => {
     expect(a.lines[1].available).toBe(100);
   });
 });
+
+describe('limits fixed: undo, exact lots', () => {
+  it('undoes a finished cook, restoring every lot, once', async () => {
+    await inv.addLot(lot({ quantity: 300, dateLabel: 'best_before', date: '2029-01-01' }));
+    await inv.addLot(lot({ quantity: 300, dateLabel: 'best_before', date: '2030-01-01' }));
+    const id = await rec.saveRecipe(mine());
+    const s = await rec.startCooking(id, 2);
+    await rec.finishCooking(s.id, [{ ingredientId: 'ing-flour', quantity: 400, unit: 'g' }]);
+    expect(await qty('ing-flour')).toBe(200);
+    await rec.undoCooking(s.id);
+    expect(await qty('ing-flour')).toBe(600);
+    expect(
+      (await db.inventoryLots.where('ingredientId').equals('ing-flour').toArray())
+        .map((l) => l.quantity)
+        .sort(),
+    ).toEqual([300, 300]);
+    expect((await db.cookingSessions.get(s.id))!.undoneAt).toBeTruthy();
+    await expect(rec.undoCooking(s.id)).rejects.toThrow('already undone');
+    expect(await qty('ing-flour')).toBe(600);
+  });
+
+  it('refuses to undo when the stock changed since, and changes nothing', async () => {
+    const l = await inv.addLot(lot({ quantity: 500 }));
+    const id = await rec.saveRecipe(mine());
+    const s = await rec.startCooking(id, 2);
+    await rec.finishCooking(s.id, [{ ingredientId: 'ing-flour', quantity: 200, unit: 'g' }]);
+    await inv.updateLot(l.id, lot({ quantity: 250 }));
+    await expect(rec.undoCooking(s.id)).rejects.toThrow('changed since');
+    expect(await qty('ing-flour')).toBe(250);
+    expect((await db.cookingSessions.get(s.id))!.undoneAt).toBeUndefined();
+  });
+
+  it('applies exactly the lots the cook chose', async () => {
+    const a = await inv.addLot(
+      lot({ quantity: 300, dateLabel: 'best_before', date: '2029-01-01' }),
+    );
+    const b = await inv.addLot(
+      lot({ quantity: 300, dateLabel: 'best_before', date: '2030-01-01' }),
+    );
+    const id = await rec.saveRecipe(mine());
+    const s = await rec.startCooking(id, 2);
+    await rec.finishCooking(s.id, [
+      { ingredientId: 'ing-flour', quantity: 250, unit: 'g', lots: [{ lotId: b.id, take: 250 }] },
+    ]);
+    expect((await db.inventoryLots.get(a.id))!.quantity).toBe(300); // earliest lot untouched
+    expect((await db.inventoryLots.get(b.id))!.quantity).toBe(50);
+  });
+
+  it('rejects lots that are over-drawn, repeated or belong to another ingredient — and rolls back', async () => {
+    const a = await inv.addLot(lot({ quantity: 100 }));
+    const m = await inv.addLot(lot({ ingredientId: 'ing-milk', quantity: 1, unit: 'l' }));
+    const id = await rec.saveRecipe(mine());
+    const s = await rec.startCooking(id, 2);
+    const bad = (lots: { lotId: string; take: number }[], what: string) =>
+      expect(
+        rec.finishCooking(s.id, [
+          {
+            ingredientId: 'ing-milk',
+            quantity: 100,
+            unit: 'ml',
+            lots: [{ lotId: m.id, take: 0.1 }],
+          },
+          { ingredientId: 'ing-flour', quantity: 1, unit: 'g', lots },
+        ]),
+      ).rejects.toThrow(what);
+    await bad([{ lotId: a.id, take: 500 }], 'Only 100 g');
+    await bad(
+      [
+        { lotId: a.id, take: 1 },
+        { lotId: a.id, take: 1 },
+      ],
+      'twice',
+    );
+    await bad([{ lotId: m.id, take: 0.1 }], 'no longer exists');
+    expect(await qty('ing-flour')).toBe(100);
+    expect(await qty('ing-milk')).toBe(1);
+  });
+});

@@ -40,10 +40,11 @@ import {
 import { planConsume } from '@/domain/lots';
 import { clampServings, formatAmount } from '@/domain/scaling';
 import { formatClock, isFinished, isPaused, remainingMs } from '@/domain/timers';
-import { formatQuantity, UNITS, unitsForSystem } from '@/domain/units';
+import { convert, formatQuantity, tidy, UNITS, unitsForSystem } from '@/domain/units';
 import { ConfirmDialog } from '../pantry/dialogs';
 import { RecipeArt } from './RecipeArt';
 import { chime, notifyTimerDone, primeAudio, useWakeLock } from './cookingUtils';
+import { LotPicker, sumEdits, type LotEdits } from './LotPicker';
 import { useNow, useRecipeDetail, type RecipeDetail } from './hooks';
 
 const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong');
@@ -54,6 +55,8 @@ const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Something went
 
 interface Row extends DeductionRow {
   qtyText: string;
+  /** set once the cook picks lots by hand: amounts in the row's unit per lot id */
+  lotEdits?: LotEdits;
 }
 
 function FinishDialog({
@@ -91,9 +94,33 @@ function FinishDialog({
   // Check each ticked row against current stock so errors show before anything is applied.
   const checks = rows.map((r) => {
     if (!r.include) return { ok: true as const };
-    const q = Number(r.qtyText.replace(',', '.'));
     const ing = detail.ingredients.get(r.ingredientId);
-    const plan = planConsume(lotsBy.get(r.ingredientId) ?? [], q, r.unit, ing?.densityGPerMl);
+    const lots = lotsBy.get(r.ingredientId) ?? [];
+    if (r.lotEdits) {
+      let total = 0;
+      let used = 0;
+      for (const l of lots) {
+        const raw = (r.lotEdits[l.id] ?? '').trim();
+        if (!raw) continue;
+        const n = Number(raw.replace(',', '.'));
+        if (!Number.isFinite(n) || n < 0)
+          return { ok: false as const, msg: 'Lot amounts must be numbers of 0 or more' };
+        if (n === 0) continue;
+        const take = convert(n, r.unit, l.unit, ing?.densityGPerMl);
+        if (take == null) return { ok: false as const, msg: 'Pick a unit that fits that lot' };
+        if (take > l.quantity + 1e-9)
+          return {
+            ok: false as const,
+            msg: `Only ${formatQuantity(l.quantity, l.unit)} in that lot`,
+          };
+        total += n;
+        used++;
+      }
+      if (!(total > 0)) return { ok: false as const, msg: 'Enter an amount from at least one lot' };
+      return { ok: true as const, lots: used, q: total };
+    }
+    const q = Number(r.qtyText.replace(',', '.'));
+    const plan = planConsume(lots, q, r.unit, ing?.densityGPerMl);
     if (plan.ok) return { ok: true as const, lots: plan.steps.length, q };
     const msg = {
       invalid: 'Enter an amount above 0',
@@ -112,11 +139,22 @@ function FinishDialog({
       const chosen = applyStock
         ? rows
             .filter((r) => r.include)
-            .map((r) => ({
-              ingredientId: r.ingredientId,
-              quantity: Number(r.qtyText.replace(',', '.')),
-              unit: r.unit,
-            }))
+            .map((r) => {
+              const density = detail.ingredients.get(r.ingredientId)?.densityGPerMl;
+              const lots = r.lotEdits
+                ? (lotsBy.get(r.ingredientId) ?? []).flatMap((l) => {
+                    const n = Number((r.lotEdits![l.id] ?? '').replace(',', '.'));
+                    const take = n > 0 ? convert(n, r.unit, l.unit, density) : null;
+                    return take != null && take > 0 ? [{ lotId: l.id, take: tidy(take) }] : [];
+                  })
+                : undefined;
+              return {
+                ingredientId: r.ingredientId,
+                quantity: r.lotEdits ? sumEdits(r.lotEdits) : Number(r.qtyText.replace(',', '.')),
+                unit: r.unit,
+                ...(lots ? { lots } : {}),
+              };
+            })
         : [];
       await repo.finishCooking(session.id, chosen, { rating, notes, planEntryId });
       toast({
@@ -161,13 +199,13 @@ function FinishDialog({
                       inputMode="decimal"
                       className={inputClass}
                       value={r.qtyText}
-                      onChange={(e) => patch(i, { qtyText: e.target.value })}
+                      onChange={(e) => patch(i, { qtyText: e.target.value, lotEdits: undefined })}
                     />
                     <select
                       aria-label={`${name} unit`}
                       className={inputClass}
                       value={r.unit}
-                      onChange={(e) => patch(i, { unit: e.target.value })}
+                      onChange={(e) => patch(i, { unit: e.target.value, lotEdits: undefined })}
                     >
                       {(unitOptions.some((u) => u.id === r.unit)
                         ? unitOptions
@@ -190,6 +228,18 @@ function FinishDialog({
                     Uses the earliest-dated stock first
                     {c.lots > 1 ? `, across ${c.lots} lots` : ''}.
                   </p>
+                )}
+                {r.include && (lotsBy.get(r.ingredientId)?.length ?? 0) > 0 && (
+                  <LotPicker
+                    name={name}
+                    lots={lotsBy.get(r.ingredientId) ?? []}
+                    unit={r.unit}
+                    density={ing?.densityGPerMl}
+                    quantity={Number(r.qtyText.replace(',', '.')) || 0}
+                    edits={r.lotEdits}
+                    onEdits={(e) => patch(i, { lotEdits: e, qtyText: String(sumEdits(e)) })}
+                    onReset={() => patch(i, { lotEdits: undefined })}
+                  />
                 )}
                 {!r.include && r.note && <p className="text-sm text-ink-soft">{r.note}.</p>}
                 {r.include && r.note && c.ok && <p className="text-sm text-warn">{r.note}.</p>}
@@ -269,6 +319,7 @@ function TimersPanel({ session, now }: { session: CookingSession; now: number })
   const [label, setLabel] = useState('');
   const timers = useMemo(() => session.timers ?? [], [session.timers]);
   const alerted = useRef(new Set<string>());
+  const [, setTick] = useState(0);
 
   // Sound once per finished timer. Anything that finished while the app was closed is
   // shown as finished but not chimed again after a reload.
@@ -395,9 +446,26 @@ function TimersPanel({ session, now }: { session: CookingSession; now: number })
           Start
         </Button>
       </form>
+      {typeof Notification !== 'undefined' && Notification.permission === 'default' && (
+        <div className="grid gap-1 rounded-2xl bg-surface-2 p-3">
+          <Button
+            variant="ghost"
+            onClick={async () => {
+              await Notification.requestPermission();
+              setTick((n) => n + 1);
+            }}
+          >
+            <Bell aria-hidden className="size-4" /> Allow alerts when this tab is hidden
+          </Button>
+          <p className="text-xs text-ink-soft">
+            Your browser will ask once. Alerts work while PantryPal is open in a tab or window (even
+            in the background).
+          </p>
+        </div>
+      )}
       <p className="text-xs text-ink-soft">
         Timers keep time even if you switch tabs or reload. Sound and alerts only work while
-        PantryPal is open on this device.
+        PantryPal is open on this device: a web app cannot ring after it is closed.
       </p>
     </Card>
   );

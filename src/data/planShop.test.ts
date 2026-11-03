@@ -355,3 +355,62 @@ describe('shopping lists', () => {
     expect((await db.shoppingItems.get(a.id))!.stockedAt).toBeUndefined();
   });
 });
+
+describe('limits fixed: planner ordering, repeat, copy', () => {
+  it('reorders within a meal and inserts at a position when moving', async () => {
+    const a = await plan.addEntry({ date: '2030-05-06', slot: 'dinner', label: 'A', servings: 1 });
+    const b = await plan.addEntry({ date: '2030-05-06', slot: 'dinner', label: 'B', servings: 1 });
+    const c = await plan.addEntry({ date: '2030-05-06', slot: 'dinner', label: 'C', servings: 1 });
+    const order = async (d = '2030-05-06', s = 'dinner') =>
+      cellEntries(await db.mealPlans.toArray(), d, s).map((e) => e.label);
+    await plan.reorder(c.id, -1);
+    expect(await order()).toEqual(['A', 'C', 'B']);
+    await plan.reorder(a.id, -1); // already first: no-op
+    await plan.reorder(b.id, 1); // already last: no-op
+    expect(await order()).toEqual(['A', 'C', 'B']);
+    await plan.moveTo(b.id, { date: '2030-05-06', slot: 'dinner', index: 0 });
+    expect(await order()).toEqual(['B', 'A', 'C']);
+    await plan.moveTo(a.id, { date: '2030-05-07', slot: 'lunch' });
+    expect(await order('2030-05-07', 'lunch')).toEqual(['A']);
+    expect(await order()).toEqual(['B', 'C']);
+  });
+
+  it('repeats daily or weekly and validates the count', async () => {
+    const a = await plan.addEntry({
+      date: '2030-05-31',
+      slot: 'lunch',
+      recipeId: 'garden-salad',
+      servings: 2,
+    });
+    await plan.repeatEntry(a.id, 'week', 2);
+    await plan.repeatEntry(a.id, 'day', 1);
+    expect((await db.mealPlans.toArray()).map((e) => e.date).sort()).toEqual([
+      '2030-05-31',
+      '2030-06-01',
+      '2030-06-07',
+      '2030-06-14',
+    ]);
+    await expect(plan.repeatEntry(a.id, 'day', 0)).rejects.toThrow('between 1 and 52');
+    await expect(plan.repeatEntry(a.id, 'day', 99)).rejects.toThrow('between 1 and 52');
+  });
+
+  it('copies a whole week, resets done, and refuses an empty or identical target', async () => {
+    const a = await plan.addEntry({
+      date: '2030-05-06',
+      slot: 'dinner',
+      recipeId: 'garden-salad',
+      servings: 2,
+    });
+    await plan.addEntry({ date: '2030-05-08', slot: 'lunch', label: 'Out', servings: 1 });
+    await plan.setDone(a.id, true);
+    expect(await plan.copyWeek('2030-05-06', '2030-05-13')).toBe(2);
+    const next = await db.mealPlans
+      .where('date')
+      .between('2030-05-13', '2030-05-19', true, true)
+      .toArray();
+    expect(next.map((e) => e.date).sort()).toEqual(['2030-05-13', '2030-05-15']);
+    expect(next.every((e) => !e.done)).toBe(true);
+    await expect(plan.copyWeek('2030-05-06', '2030-05-06')).rejects.toThrow('different week');
+    await expect(plan.copyWeek('2031-01-06', '2031-01-13')).rejects.toThrow('nothing planned');
+  });
+});

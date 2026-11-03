@@ -40,7 +40,7 @@ export function useRecipeLibrary(): RecipeLibrary | undefined {
       db.collections.orderBy('name').toArray(),
       db.ingredients.toArray(),
       db.inventoryLots.toArray(),
-      db.cookingSessions.filter((s) => s.status === 'completed').toArray(),
+      db.cookingSessions.filter((s) => s.status === 'completed' && !s.undoneAt).toArray(),
     ]);
     return { recipes, lines, collections, ingredients, lots, sessions };
   }, []);

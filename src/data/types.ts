@@ -149,6 +149,11 @@ export interface AppliedDeduction {
   ingredientId: ID;
   quantity: number;
   unit: string;
+  /** exact lots to draw from, in each lot's own unit; omit to use earliest-dated stock first */
+  lots?: { lotId: ID; take: number }[];
+  /** what was actually removed, kept so the cook can be undone */
+  steps?: { lotId: ID; take: number; remaining: number }[];
+  snapshots?: InventoryLot[];
 }
 
 export interface CookingSession {
@@ -167,6 +172,9 @@ export interface CookingSession {
   rating?: number;
   notes?: string;
   deductions?: AppliedDeduction[];
+  planEntryId?: ID;
+  /** set when the cook was undone and the stock restored */
+  undoneAt?: number;
 }
 
 export interface PreferenceRow {

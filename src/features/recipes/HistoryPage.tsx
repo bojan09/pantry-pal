@@ -1,11 +1,18 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { History, Star } from 'lucide-react';
 import { db } from '@/data/db';
-import { Card, EmptyState, LinkButton, PageHeader } from '@/design/ui';
+import { Button, Card, EmptyState, LinkButton, PageHeader } from '@/design/ui';
+import { recipes as repo } from '@/data/recipes';
+import { useToast } from '@/app/Toast';
+import { ConfirmDialog } from '../pantry/dialogs';
+import type { CookingSession } from '@/data/types';
 import { formatQuantity } from '@/domain/units';
 
 export function HistoryPage() {
+  const toast = useToast();
+  const [undoing, setUndoing] = useState<CookingSession>();
   const data = useLiveQuery(async () => {
     const [sessions, recipes, ingredients] = await Promise.all([
       db.cookingSessions.filter((s) => s.status === 'completed').toArray(),
@@ -76,6 +83,11 @@ export function HistoryPage() {
                     </p>
                   )}
                   {s.notes && <p className="text-ink-soft">&ldquo;{s.notes}&rdquo;</p>}
+                  {s.undoneAt && (
+                    <p className="inline-flex w-fit rounded-full bg-warn-soft px-3 py-0.5 text-xs font-bold text-warn">
+                      Undone: pantry stock was put back
+                    </p>
+                  )}
                   <p className="text-sm text-ink-soft">
                     {s.deductions?.length
                       ? `Used from pantry: ${s.deductions
@@ -86,11 +98,38 @@ export function HistoryPage() {
                           .join(', ')}`
                       : 'Pantry was not changed.'}
                   </p>
+                  {!s.undoneAt && s.deductions?.some((d) => d.snapshots?.length) && (
+                    <div>
+                      <Button variant="ghost" onClick={() => setUndoing(s)}>
+                        Undo and put the ingredients back
+                      </Button>
+                    </div>
+                  )}
                 </Card>
               </li>
             );
           })}
         </ol>
+      )}
+      {undoing && (
+        <ConfirmDialog
+          title="Undo this cook?"
+          confirmLabel="Put ingredients back"
+          onClose={() => setUndoing(undefined)}
+          onConfirm={async () => {
+            try {
+              await repo.undoCooking(undoing.id);
+              toast({ message: 'Undone. Your pantry is back as it was.' });
+            } catch (e) {
+              toast({ message: e instanceof Error ? e.message : 'Could not undo', tone: 'error' });
+            }
+          }}
+        >
+          <p>
+            The ingredients used are added back to the lots they came from. This only works if those
+            lots have not been edited since, so it can never create food that is not there.
+          </p>
+        </ConfirmDialog>
       )}
     </>
   );

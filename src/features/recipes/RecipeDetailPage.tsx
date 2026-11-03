@@ -7,6 +7,7 @@ import {
   Layers,
   Minus,
   CalendarPlus,
+  Download,
   Pencil,
   ShoppingCart,
   Play,
@@ -26,6 +27,7 @@ import { ConfirmDialog } from '../pantry/dialogs';
 import { EntryDialog } from '../planner/EntryDialog';
 import { GenerateDialog } from '../shopping/GenerateDialog';
 import { toISODate } from '@/lib/dates';
+import { exportRecipe } from '@/data/recipeIo';
 import { FavoriteButton } from './RecipeCard';
 import { RecipeArt } from './RecipeArt';
 import { useRecipeDetail } from './hooks';
@@ -171,7 +173,7 @@ export function RecipeDetailPage() {
     setParams(next, { replace: true });
   };
   const active = data.sessions.find((s) => s.status === 'active');
-  const done = data.sessions.filter((s) => s.status === 'completed');
+  const done = data.sessions.filter((s) => s.status === 'completed' && !s.undoneAt);
   const lastDone = done.reduce<number | undefined>(
     (m, s) => Math.max(m ?? 0, s.finishedAt ?? s.startedAt),
     undefined,
@@ -268,6 +270,27 @@ export function RecipeDetailPage() {
               </Button>
               <Button variant="ghost" onClick={() => setShopOpen(true)}>
                 <ShoppingCart aria-hidden className="size-4" /> Shopping list
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  const text = JSON.stringify(
+                    exportRecipe(
+                      { recipe, ingredients: data.lines, steps: data.steps },
+                      data.ingredients,
+                    ),
+                    null,
+                    2,
+                  );
+                  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `${recipe.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}.recipe.json`;
+                  a.click();
+                  setTimeout(() => URL.revokeObjectURL(url), 1000);
+                }}
+              >
+                <Download aria-hidden className="size-4" /> Export
               </Button>
               <Button variant="ghost" onClick={() => setCollectionsOpen(true)}>
                 <Layers aria-hidden className="size-4" /> Collections

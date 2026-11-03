@@ -380,6 +380,35 @@ export function createRecipes(database: PantryDB = defaultDb) {
     });
   }
 
+  /**
+   * Puts back what a finished cook took, if every lot is still as the cook left it. Refuses (and
+   * changes nothing) when stock was edited since, so it can never invent food.
+   */
+  async function undoCooking(id: string) {
+    await database.transaction(
+      'rw',
+      [
+        database.cookingSessions,
+        database.inventoryLots,
+        database.inventoryEvents,
+        database.ingredients,
+        database.mealPlans,
+      ],
+      async () => {
+        const s = await database.cookingSessions.get(id);
+        if (!s || s.status !== 'completed')
+          throw new InventoryError('That cooking session cannot be undone', 'not_found');
+        if (s.undoneAt) throw new InventoryError('This cook was already undone', 'duplicate');
+        for (const d of s.deductions ?? []) {
+          if (d.snapshots?.length) await inventory.undo(d.snapshots, d.steps);
+        }
+        if (s.planEntryId)
+          await database.mealPlans.update(s.planEntryId, { done: false, updatedAt: Date.now() });
+        await database.cookingSessions.update(id, { undoneAt: Date.now() });
+      },
+    );
+  }
+
   /** Stops the session and changes nothing in the pantry. */
   async function cancelCooking(id: string) {
     await database.transaction('rw', database.cookingSessions, async () => {
@@ -423,11 +452,21 @@ export function createRecipes(database: PantryDB = defaultDb) {
         const applied: AppliedDeduction[] = [];
         for (const [i, d] of deductions.entries()) {
           if (!(d.quantity > 0)) continue;
-          await inventory.consume(d.ingredientId, d.quantity, d.unit, {
-            idempotencyKey: `cook:${id}:${i}`,
-            note: `Cooked ${s.recipeName ?? 'a recipe'}`,
+          const key = `cook:${id}:${i}`;
+          const note = `Cooked ${s.recipeName ?? 'a recipe'}`;
+          const res = d.lots?.length
+            ? await inventory.consumeLots(d.ingredientId, d.lots, { idempotencyKey: key, note })
+            : await inventory.consume(d.ingredientId, d.quantity, d.unit, {
+                idempotencyKey: key,
+                note,
+              });
+          applied.push({
+            ingredientId: d.ingredientId,
+            quantity: d.quantity,
+            unit: d.unit,
+            steps: res.steps,
+            snapshots: res.snapshots,
           });
-          applied.push({ ingredientId: d.ingredientId, quantity: d.quantity, unit: d.unit });
         }
         if (extra.planEntryId)
           await database.mealPlans.update(extra.planEntryId, { done: true, updatedAt: Date.now() });
@@ -436,6 +475,7 @@ export function createRecipes(database: PantryDB = defaultDb) {
           finishedAt: Date.now(),
           deductions: applied,
           timers: [],
+          ...(extra.planEntryId ? { planEntryId: extra.planEntryId } : {}),
           ...clean({ rating: extra.rating, notes: extra.notes?.trim().slice(0, 500) }),
         });
         return applied;
@@ -461,6 +501,7 @@ export function createRecipes(database: PantryDB = defaultDb) {
     setTimerPaused,
     cancelCooking,
     finishCooking,
+    undoCooking,
   };
 }
 
