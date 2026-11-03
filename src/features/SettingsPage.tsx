@@ -399,19 +399,6 @@ export function SettingsPage() {
           </div>
         </Group>
 
-        <Group title="Sample meal plan">
-          <p className="text-sm text-ink-soft">
-            Shows an illustrative week of meals, clearly labelled SAMPLE, so you can preview the
-            planner. It is not stored and never counted as your data.
-          </p>
-          <Chip
-            selected={prefs.sampleContent}
-            onClick={() => update({ sampleContent: !prefs.sampleContent })}
-          >
-            {prefs.sampleContent ? 'Sample content: on' : 'Sample content: off'}
-          </Chip>
-        </Group>
-
         <Group title="App & data">
           {installed ? (
             <p className="text-ink-soft">PantryPal is installed on this device.</p>

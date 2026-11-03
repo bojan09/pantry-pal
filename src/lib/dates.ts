@@ -31,3 +31,9 @@ export function greetingFor(d: Date): 'morning' | 'afternoon' | 'evening' {
   if (h < 18) return 'afternoon';
   return 'evening';
 }
+
+/** Parses yyyy-mm-dd as a local date (never UTC, so it cannot shift a day). */
+export function fromISODate(s: string): Date {
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}

@@ -57,12 +57,14 @@ interface Row extends DeductionRow {
 }
 
 function FinishDialog({
+  planEntryId,
   session,
   detail,
   factor,
   onClose,
   onDone,
 }: {
+  planEntryId?: string;
   session: CookingSession;
   detail: RecipeDetail;
   factor: number;
@@ -116,7 +118,7 @@ function FinishDialog({
               unit: r.unit,
             }))
         : [];
-      await repo.finishCooking(session.id, chosen, { rating, notes });
+      await repo.finishCooking(session.id, chosen, { rating, notes, planEntryId });
       toast({
         message: applyStock
           ? `Pantry updated for ${chosen.length} ingredient${chosen.length === 1 ? '' : 's'}`
@@ -717,6 +719,7 @@ export function CookingPage() {
 
       {finishOpen && (
         <FinishDialog
+          planEntryId={params.get('plan') ?? undefined}
           session={session}
           detail={data}
           factor={factor}

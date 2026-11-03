@@ -210,6 +210,7 @@ export function createRecipes(database: PantryDB = defaultDb) {
         database.collections,
         database.cookingSessions,
         database.mediaAssets,
+        database.mealPlans,
       ],
       async () => {
         const r = await database.recipes.get(id);
@@ -235,6 +236,14 @@ export function createRecipes(database: PantryDB = defaultDb) {
           .equals(id)
           .filter((s) => s.status === 'active')
           .modify({ status: 'cancelled', finishedAt: Date.now(), timers: [] });
+        // Planned meals keep their place as a plain note instead of silently disappearing.
+        await database.mealPlans
+          .where('recipeId')
+          .equals(id)
+          .modify((e) => {
+            e.label = r.name;
+            delete e.recipeId;
+          });
         await database.recipes.delete(id);
       },
     );
@@ -392,7 +401,7 @@ export function createRecipes(database: PantryDB = defaultDb) {
   async function finishCooking(
     id: string,
     deductions: AppliedDeduction[],
-    extra: { rating?: number; notes?: string } = {},
+    extra: { rating?: number; notes?: string; planEntryId?: string } = {},
   ): Promise<AppliedDeduction[]> {
     if (extra.rating != null && !(extra.rating >= 1 && extra.rating <= 5))
       throw new InventoryError('Ratings go from 1 to 5', 'invalid');
@@ -404,6 +413,7 @@ export function createRecipes(database: PantryDB = defaultDb) {
         database.inventoryEvents,
         database.ingredients,
         database.recipes,
+        database.mealPlans,
       ],
       async () => {
         const s = await database.cookingSessions.get(id);
@@ -419,6 +429,8 @@ export function createRecipes(database: PantryDB = defaultDb) {
           });
           applied.push({ ingredientId: d.ingredientId, quantity: d.quantity, unit: d.unit });
         }
+        if (extra.planEntryId)
+          await database.mealPlans.update(extra.planEntryId, { done: true, updatedAt: Date.now() });
         await database.cookingSessions.update(id, {
           status: 'completed',
           finishedAt: Date.now(),

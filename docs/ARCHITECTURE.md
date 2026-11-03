@@ -52,3 +52,10 @@ react, react-dom, react-router-dom, dexie, dexie-react-hooks, zod, motion, lucid
 - `data/starterRecipes.ts`: the bundled cookbook, compiled against catalog names (a typo throws at load and in tests).
 - `data/recipes.ts`: recipe CRUD, collections, cooking sessions. `finishCooking` runs inside one Dexie transaction over sessions, lots, events: a failing row rolls back everything, a finished session cannot be applied again, and each row carries an idempotency key.
 - Cooking sessions persist step, ticked items and timers in the `cookingSessions` table, so a reload resumes exactly where the cook left off.
+
+## Phase 4: planning and shopping
+
+- `domain/shopping.ts`: `buildNeeds` (demand − stock − already listed, sequentially drawn down), `explainNeed`, category grouping, price basis and cost estimates, share text.
+- `domain/planning.ts`: slots and cell ordering.
+- `data/planner.ts`: validated entry CRUD; `data/shopping.ts`: lists, items, `applyNeeds` (merge), `stockPurchased` (one transaction over items, lots and events; each item has a `purchase:<id>` idempotency key).
+- The planner never writes inventory. Stock changes only from cooking (Phase 3) or a confirmed purchase.

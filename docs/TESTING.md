@@ -26,3 +26,8 @@ Not covered: real-device performance of the shelf animations, screen-reader pass
 
 - Unit: fractions/rounding/units (`scaling.test.ts`); starter recipe integrity; CRUD validation; starter read-only; collections; session resume; cancel leaves stock and events untouched; atomic finish with FIFO lots; rollback on a bad row; double-apply and concurrent-apply rejection; availability statuses and shared-stock handling (`recipes.test.ts`).
 - E2E (`e2e/recipes.spec.ts`): search/filter/sort, favourites, scaling, create/edit/delete, duplicate, collections, offline recipe, full cook-through with confirm, stop cooking, timers across reload, phone swipe, axe on recipes/detail/form/collections/history/cooking.
+
+## Phase 4 coverage
+
+- Unit: `domain/shopping` maths through `planShop.test.ts` (consolidation, shared stock, unit mismatch, optional lines, merging, ticked ≠ stocked), planner CRUD/validation/move/duplicate, recipe deletion keeps plans, atomic purchase and rollback.
+- E2E (`e2e/planner.spec.ts`): plan/edit/move/duplicate/remove, drag and drop, week navigation, plan → list → purchase → pantry, lists lifecycle, recipe → list, axe, phone width.

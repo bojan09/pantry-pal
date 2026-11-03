@@ -6,7 +6,9 @@ import {
   Copy,
   Layers,
   Minus,
+  CalendarPlus,
   Pencil,
+  ShoppingCart,
   Play,
   Plus,
   Timer,
@@ -21,6 +23,9 @@ import type { Collection } from '@/data/types';
 import { groupLots, recipeAvailability, totalMinutes } from '@/domain/recipes';
 import { clampServings, formatAmount, isNonLinear } from '@/domain/scaling';
 import { ConfirmDialog } from '../pantry/dialogs';
+import { EntryDialog } from '../planner/EntryDialog';
+import { GenerateDialog } from '../shopping/GenerateDialog';
+import { toISODate } from '@/lib/dates';
 import { FavoriteButton } from './RecipeCard';
 import { RecipeArt } from './RecipeArt';
 import { useRecipeDetail } from './hooks';
@@ -128,6 +133,8 @@ export function RecipeDetailPage() {
   const [params, setParams] = useSearchParams();
   const [collectionsOpen, setCollectionsOpen] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [planOpen, setPlanOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);
 
   const recipe = data?.recipe;
   const servings = recipe ? clampServings(Number(params.get('servings')) || recipe.servings) : 1;
@@ -256,6 +263,12 @@ export function RecipeDetailPage() {
               </p>
             )}
             <div className="grid grid-cols-2 gap-2">
+              <Button variant="ghost" onClick={() => setPlanOpen(true)}>
+                <CalendarPlus aria-hidden className="size-4" /> Add to plan
+              </Button>
+              <Button variant="ghost" onClick={() => setShopOpen(true)}>
+                <ShoppingCart aria-hidden className="size-4" /> Shopping list
+              </Button>
               <Button variant="ghost" onClick={() => setCollectionsOpen(true)}>
                 <Layers aria-hidden className="size-4" /> Collections
               </Button>
@@ -433,6 +446,19 @@ export function RecipeDetailPage() {
           </p>
         </div>
       </div>
+      {planOpen && (
+        <EntryDialog
+          defaults={{ date: toISODate(new Date()), slot: 'dinner', recipeId: recipe.id }}
+          onClose={() => setPlanOpen(false)}
+        />
+      )}
+      {shopOpen && (
+        <GenerateDialog
+          title="Add missing to shopping list"
+          demands={[{ recipeId: recipe.id, servings }]}
+          onClose={() => setShopOpen(false)}
+        />
+      )}
       {collectionsOpen && (
         <CollectionsDialog
           recipeId={recipe.id}

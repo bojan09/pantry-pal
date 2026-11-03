@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { ChevronRight, Search, Sparkles } from 'lucide-react';
 import { db } from '@/data/db';
 import { usePrefs } from '@/app/PrefsProvider';
-import { Art, KitchenBackdrop, Sprig, type Zone } from '@/design/illustrations';
+import { Art, KitchenBackdrop, Sprig, type ArtKey, type Zone } from '@/design/illustrations';
 import { colorFor, ItemSprite } from '@/design/illustrations/sprites';
 import { spriteKindFor } from '@/data/catalog';
 import { byFirstExpiring, daysUntil, expiryStatus } from '@/domain/lots';
@@ -12,8 +12,6 @@ import { LivingPantry } from './pantry/LivingPantry';
 import { usePantryData } from './pantry/hooks';
 import { Card, Chip, cx, LinkButton } from '@/design/ui';
 import { addDays, greetingFor, toISODate, weekDays } from '@/lib/dates';
-import { SampleBanner } from './RecipeCard';
-import { SAMPLE_WEEK } from './sample';
 import { RecipeCard } from './recipes/RecipeCard';
 import { useRecipeLibrary } from './recipes/hooks';
 
@@ -42,7 +40,15 @@ export function HomePage() {
   const now = new Date();
   const days = weekDays(now, prefs.weekStart);
   const today = toISODate(now);
-  const sample = prefs.sampleContent;
+  const weekPlan = useLiveQuery(async () => {
+    const first = toISODate(days[0]);
+    const last = toISODate(days[6]);
+    const [entries, recipes] = await Promise.all([
+      db.mealPlans.where('date').between(first, last, true, true).toArray(),
+      db.recipes.toArray(),
+    ]);
+    return { entries, recipes: new Map(recipes.map((r) => [r.id, r])) };
+  }, [toISODate(days[0])]);
 
   const pantry = usePantryData();
   const recipeCount = useLiveQuery(() => db.recipes.count(), [], 0);
@@ -92,7 +98,6 @@ export function HomePage() {
             <Sprig aria-hidden className="h-20 shrink-0 opacity-90 lg:hidden" />
           </div>
         </div>
-        {sample && <SampleBanner />}
 
         {/* Mobile quick actions */}
         <div className="grid gap-4 lg:hidden">
@@ -313,10 +318,21 @@ export function HomePage() {
             className="mt-3 grid grid-cols-7 gap-1 text-center text-xs"
             aria-label="Days this week"
           >
-            {days.map((d, i) => {
+            {days.map((d) => {
               const iso = toISODate(d);
               const isToday = iso === today;
-              const meal = sample ? SAMPLE_WEEK[i] : undefined;
+              const dayEntries = (weekPlan?.entries ?? [])
+                .filter((e) => e.date === iso)
+                .sort((a, b) => a.position - b.position);
+              const firstE = dayEntries[0];
+              const r = firstE?.recipeId ? weekPlan?.recipes.get(firstE.recipeId) : undefined;
+              const meal = firstE
+                ? {
+                    label: r?.name ?? firstE.label ?? 'Meal',
+                    art: r?.art as ArtKey | undefined,
+                    more: dayEntries.length - 1,
+                  }
+                : undefined;
               return (
                 <li
                   key={iso}
@@ -328,8 +344,9 @@ export function HomePage() {
                   <span className="font-semibold">{fmt(d, { weekday: 'short' })}</span>
                   {meal ? (
                     <>
-                      <Art name={meal.art} className="size-8" />
+                      {meal.art && <Art name={meal.art} className="size-8" />}
                       <span className="max-w-full truncate px-0.5 text-[11px]">{meal.label}</span>
+                      {meal.more > 0 && <span className="text-[10px]">+{meal.more} more</span>}
                     </>
                   ) : (
                     <span className={cx('font-display text-lg', !isToday && 'text-ink-soft')}>
@@ -340,7 +357,7 @@ export function HomePage() {
               );
             })}
           </ol>
-          {!sample && (
+          {!weekPlan?.entries.length && (
             <p className="mt-3 text-sm text-ink-soft">
               Nothing planned for {fmt(days[0], { month: 'short', day: 'numeric' })} –{' '}
               {fmt(addDays(days[0], 6), { month: 'short', day: 'numeric' })}.

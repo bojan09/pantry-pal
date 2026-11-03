@@ -43,3 +43,27 @@ Decisions and limits:
 - Add-missing-to-shopping-list arrives with the shopping list in Phase 4.
 
 Tests: 82 unit/integration (scaling, availability, atomic finish, rollback, double-apply, cancel, starter integrity), E2E for cookbook, CRUD, collections, offline, cook-through, cancel, timers across reload, phone swipe, axe on every new page.
+
+### Phase 3 follow-up: timer pause
+
+Timers can now be paused and resumed. A paused timer stores the time left and survives reloads. Tests: 87 unit/integration at that point.
+
+## Phase 4: Meal planner and shopping lists
+
+Status: delivered, awaiting review.
+
+Scope:
+- Week planner: breakfast/lunch/dinner/snack plus custom meal names, recipe or free-text notes (e.g. "Leftovers", never counted as stock or needs), servings per entry, week navigation, mark done, cook straight from an entry (finishing marks it done).
+- Moving: drag and drop between days/meals on pointer devices, plus an Edit dialog with date/meal fields, previous/next day buttons and duplicate for keyboard and phone.
+- Shopping generation (from the planner week or a single recipe): needs = recipes − pantry − already on the list. Shown line by line with the arithmetic before anything is written. Optional ingredients are not added; stock in an unrelated unit is not subtracted and is flagged; stock is drawn down as rows are processed so the same pantry grams are never counted twice. Repeated generation merges into existing items.
+- Lists: multiple lists, manual items, edit/delete, categorised view, check/uncheck, share (native share or copy as text), per-list currency and optional budget, optional price per kg / L / piece with an estimate, "over/under budget", no cross-currency sums.
+- Buying: ticked items go to the pantry only through a confirmation dialog (amount, unit, place, date). Atomic, one purchase per item, cost carried to the lot, `purchase` events logged.
+- Deleting a recipe keeps its planned meals as notes. Sample content removed everywhere (nothing is invented any more); Home shows the real week.
+
+Decisions and limits:
+- Drag and drop uses the browser's native API (no extra dependency), which does not work with touch; the Edit dialog is the touch alternative.
+- Prices are per kg, per L or per counted unit and are estimates the user typed.
+- Meals marked done are excluded from shopping generation; a planned meal in the past that was not marked done still counts.
+- Not done: reordering within a cell (entries keep creation order), a month view, recurring plans, template weeks.
+
+Tests: 100 unit/integration (planner CRUD/validation, needs maths, merging, price estimate, atomic purchase and rollback), E2E for planning, moving, drag and drop, week navigation, generation, lists, budget, copy, purchase into pantry, axe.

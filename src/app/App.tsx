@@ -6,7 +6,9 @@ import { HomePage } from '@/features/HomePage';
 import { ExpiringPage } from '@/features/pantry/ExpiringPage';
 import { IngredientPage } from '@/features/pantry/IngredientPage';
 import { PantryPage } from '@/features/pantry/PantryPage';
-import { AnalyticsPage, MorePage, NotFoundPage, PlannerPage, ShoppingPage } from '@/features/pages';
+import { AnalyticsPage, MorePage, NotFoundPage } from '@/features/pages';
+import { PlannerPage } from '@/features/planner/PlannerPage';
+import { ShoppingPage } from '@/features/shopping/ShoppingPage';
 import { RecipeDetailPage } from '@/features/recipes/RecipeDetailPage';
 import { RecipesPage } from '@/features/recipes/RecipesPage';
 

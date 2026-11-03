@@ -102,14 +102,19 @@ export interface MealPlanEntry extends Stamped {
   date: string; // yyyy-mm-dd
   slot: MealSlot;
   recipeId?: ID;
+  /** free-text entry such as "Leftovers"; used when there is no recipe */
   label?: string;
   servings: number;
   position: number;
+  /** cooked or eaten: no longer counts towards shopping needs */
+  done?: boolean;
 }
 
 export interface ShoppingList extends Stamped {
   name: string;
   currency: string;
+  /** optional spending limit, in the list's currency */
+  budget?: number;
 }
 
 export interface ShoppingItem extends Stamped {
@@ -120,7 +125,11 @@ export interface ShoppingItem extends Stamped {
   unit?: string;
   category: string;
   checked: boolean;
+  /** price per kg, per L, or per piece/pack/jar (see priceBasis), in the list's currency */
   unitPrice?: number;
+  note?: string;
+  /** set once the purchase was confirmed into the pantry */
+  stockedAt?: number;
 }
 
 export interface CookingTimer {

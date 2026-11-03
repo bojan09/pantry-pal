@@ -261,32 +261,26 @@ test('screenshots for design review', async ({ page }) => {
   }
 });
 
-test.describe('sample content', () => {
-  test('labels the sample meal plan and can be turned off', async ({ page }) => {
-    await seedOnboarded(page, { sampleContent: true });
+test.describe('no fabricated content', () => {
+  test('a fresh start shows empty states and nothing labelled SAMPLE', async ({ page }) => {
+    await seedOnboarded(page);
     await page.setViewportSize({ width: 1440, height: 900 });
+    for (const path of ['/', '/planner', '/shopping', '/pantry']) {
+      await page.goto(path);
+      await expect(page.getByText('SAMPLE', { exact: true })).toHaveCount(0);
+    }
     await page.goto('/');
-    await expect(page.getByText('SAMPLE').first()).toBeVisible();
-    await page.goto('/planner');
-    await expect(page.getByText('SAMPLE').first()).toBeVisible();
-
-    await page.goto('/settings');
-    await page.getByRole('button', { name: 'Sample content: on' }).click();
-    await page.goto('/');
-    await expect(page.getByText('SAMPLE')).toHaveCount(0);
     await expect(page.getByText('Nothing logged yet.')).toBeVisible();
     await page.goto('/planner');
-    await expect(page.getByText('Nothing planned')).toBeVisible();
+    await expect(page.getByText('Nothing planned this week')).toBeVisible();
   });
 
-  test('onboarding offers sample or empty and stores the choice', async ({ page }) => {
+  test('onboarding no longer offers sample content', async ({ page }) => {
     await page.goto('/');
     await page.getByRole('button', { name: 'Next' }).click();
     await page.getByRole('button', { name: 'Next' }).click();
-    await page.getByRole('radio', { name: 'Empty kitchen' }).click();
+    await expect(page.getByText('Start with')).toHaveCount(0);
     await page.getByRole('button', { name: 'Start cooking' }).click();
-    await expect(page.getByText('SAMPLE')).toHaveCount(0);
-    const stored = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!), PREFS_KEY);
-    expect(stored.sampleContent).toBe(false);
+    await expect(page.getByRole('heading', { name: /Good .*!/ })).toBeVisible();
   });
 });
