@@ -8,6 +8,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Flame,
+  Pause,
+  Play,
   ListChecks,
   Star,
   Timer,
@@ -37,7 +39,7 @@ import {
 } from '@/domain/recipes';
 import { planConsume } from '@/domain/lots';
 import { clampServings, formatAmount } from '@/domain/scaling';
-import { formatClock, isFinished, remainingMs } from '@/domain/timers';
+import { formatClock, isFinished, isPaused, remainingMs } from '@/domain/timers';
 import { formatQuantity, UNITS, unitsForSystem } from '@/domain/units';
 import { ConfirmDialog } from '../pantry/dialogs';
 import { RecipeArt } from './RecipeArt';
@@ -323,6 +325,20 @@ function TimersPanel({ session, now }: { session: CookingSession; now: number })
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold">{t.label}</span>
+                  {!done && (
+                    <button
+                      type="button"
+                      aria-label={`${isPaused(t) ? 'Resume' : 'Pause'} ${t.label}`}
+                      onClick={() => void repo.setTimerPaused(session.id, t.id, !isPaused(t))}
+                      className="pp-lift ml-auto grid size-11 place-items-center rounded-full"
+                    >
+                      {isPaused(t) ? (
+                        <Play aria-hidden className="size-4" />
+                      ) : (
+                        <Pause aria-hidden className="size-4" />
+                      )}
+                    </button>
+                  )}
                   <button
                     type="button"
                     aria-label={`${done ? 'Dismiss' : 'Cancel'} ${t.label}`}
@@ -340,9 +356,12 @@ function TimersPanel({ session, now }: { session: CookingSession; now: number })
                   <p
                     className="font-display text-3xl font-semibold tabular-nums"
                     role="timer"
-                    aria-label={`${t.label}: ${formatClock(left)} left`}
+                    aria-label={`${t.label}: ${formatClock(left)} left${isPaused(t) ? ', paused' : ''}`}
                   >
                     {formatClock(left)}
+                    {isPaused(t) && (
+                      <span className="ml-2 text-base font-sans text-ink-soft">Paused</span>
+                    )}
                   </p>
                 )}
                 <div className="h-1.5 overflow-hidden rounded-full bg-line" aria-hidden>
@@ -419,7 +438,7 @@ export function CookingPage() {
     [sessionId],
   );
   const active = session?.status === 'active';
-  const now = useNow(active && (session?.timers?.length ?? 0) > 0);
+  const now = useNow(active && (session?.timers ?? []).some((t) => !isPaused(t)));
   const wake = useWakeLock(!!active);
 
   const step = Math.min(session?.stepIndex ?? 0, Math.max(0, (data?.steps.length ?? 1) - 1));

@@ -260,6 +260,15 @@ test.describe('cooking mode', () => {
     await page.getByRole('button', { name: /Start 3 min timer/ }).click();
     await expect(page.getByRole('timer', { name: /Step 3/ })).toBeVisible();
 
+    await page.getByRole('button', { name: 'Pause Step 3' }).click();
+    await expect(page.getByText('Paused')).toBeVisible();
+    await page.reload();
+    const frozen = await page.getByRole('timer', { name: /Step 3/ }).textContent();
+    await page.waitForTimeout(1500);
+    await expect(page.getByRole('timer', { name: /Step 3/ })).toHaveText(frozen!);
+    await page.getByRole('button', { name: 'Resume Step 3' }).click();
+    await expect(page.getByText('Paused')).toHaveCount(0);
+
     await page.getByLabel('Timer minutes').fill('0.03');
     await page.getByLabel('Timer label (optional)').fill('Quick check');
     await page.getByRole('button', { name: 'Start', exact: true }).click();

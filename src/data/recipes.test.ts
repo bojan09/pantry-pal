@@ -169,6 +169,18 @@ describe('cooking session', () => {
     await expect(rec.startTimer(s1.id, 'x', 0)).rejects.toThrow('1 second');
   });
 
+  it('pauses and resumes a timer, persisted', async () => {
+    const s = await rec.startCooking('garden-frittata', 3);
+    const t = await rec.startTimer(s.id, 'Cook', 600);
+    await rec.setTimerPaused(s.id, t.id, true);
+    const paused = (await db.cookingSessions.get(s.id))!.timers![0];
+    expect(paused.pausedRemainingMs).toBeGreaterThan(590_000);
+    await rec.setTimerPaused(s.id, t.id, false);
+    const running = (await db.cookingSessions.get(s.id))!.timers![0];
+    expect(running.pausedRemainingMs).toBeUndefined();
+    expect(running.endsAt).toBeGreaterThan(Date.now() + 590_000);
+  });
+
   it('cancel leaves inventory completely unchanged', async () => {
     await inv.addLot(lot());
     const before = await db.inventoryEvents.count();

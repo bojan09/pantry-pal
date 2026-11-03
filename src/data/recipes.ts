@@ -13,7 +13,7 @@ import type {
   RecipeStep,
 } from './types';
 import { isKnownUnit } from '@/domain/units';
-import { makeTimer } from '@/domain/timers';
+import { makeTimer, pauseTimer, resumeTimer } from '@/domain/timers';
 import { newId } from '@/lib/ids';
 
 export const recipeInputSchema = z.object({
@@ -358,6 +358,19 @@ export function createRecipes(database: PantryDB = defaultDb) {
     });
   }
 
+  async function setTimerPaused(sessionId: string, timerId: string, paused: boolean) {
+    await database.transaction('rw', database.cookingSessions, async () => {
+      const s = await database.cookingSessions.get(sessionId);
+      if (!s || s.status !== 'active') return;
+      const now = Date.now();
+      await database.cookingSessions.update(sessionId, {
+        timers: (s.timers ?? []).map((t) =>
+          t.id !== timerId ? t : paused ? pauseTimer(t, now) : resumeTimer(t, now),
+        ),
+      });
+    });
+  }
+
   /** Stops the session and changes nothing in the pantry. */
   async function cancelCooking(id: string) {
     await database.transaction('rw', database.cookingSessions, async () => {
@@ -433,6 +446,7 @@ export function createRecipes(database: PantryDB = defaultDb) {
     patchSession,
     startTimer,
     removeTimer,
+    setTimerPaused,
     cancelCooking,
     finishCooking,
   };

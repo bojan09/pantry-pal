@@ -130,6 +130,8 @@ export interface CookingTimer {
   startedAt: number;
   /** wall-clock moment the timer ends; remaining time is always endsAt - now */
   endsAt: number;
+  /** while paused: time left, and endsAt is meaningless until resumed */
+  pausedRemainingMs?: number;
   /** set once the user has acknowledged a finished timer */
   dismissed?: boolean;
 }
