@@ -7,6 +7,10 @@ const ROUTES = [
   '/',
   '/pantry',
   '/recipes',
+  '/recipes/garden-frittata',
+  '/recipes/garden-frittata/cook',
+  '/recipes/new',
+  '/history',
   '/planner',
   '/shopping',
   '/expiring',
@@ -258,26 +262,21 @@ test('screenshots for design review', async ({ page }) => {
 });
 
 test.describe('sample content', () => {
-  test('is labelled, previews recipes, and can be turned off to show real empty states', async ({
-    page,
-  }) => {
+  test('labels the sample meal plan and can be turned off', async ({ page }) => {
     await seedOnboarded(page, { sampleContent: true });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');
     await expect(page.getByText('SAMPLE').first()).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Creamy Tomato Pasta' })).toBeVisible();
-    await page.getByRole('link', { name: /Creamy Tomato Pasta/ }).click();
-    await expect(
-      page.getByRole('heading', { level: 1, name: 'Creamy Tomato Pasta' }),
-    ).toBeVisible();
+    await page.goto('/planner');
+    await expect(page.getByText('SAMPLE').first()).toBeVisible();
 
     await page.goto('/settings');
     await page.getByRole('button', { name: 'Sample content: on' }).click();
     await page.goto('/');
     await expect(page.getByText('SAMPLE')).toHaveCount(0);
     await expect(page.getByText('Nothing logged yet.')).toBeVisible();
-    await page.goto('/recipes');
-    await expect(page.getByText('No recipes yet')).toBeVisible();
+    await page.goto('/planner');
+    await expect(page.getByText('Nothing planned')).toBeVisible();
   });
 
   test('onboarding offers sample or empty and stores the choice', async ({ page }) => {

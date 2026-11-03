@@ -43,3 +43,12 @@ react, react-dom, react-router-dom, dexie, dexie-react-hooks, zod, motion, lucid
 - **Jar sizes** (small, medium, large) are separate count units. A small jar is not a large jar, so they never merge or convert, like cans and pieces. Ajvar, pickles, olives and jam default to a medium jar. Catalog v2 refreshes the usual unit of built-in items only; existing lots and custom ingredients are untouched. Count units pluralise in display ("2 small jars").
 - **Profile picture** is centre-cropped to a 256 px JPEG in the browser and stored in `mediaAssets` (kind `avatar`), referenced by `prefs.avatarId`. Replacing or removing deletes the old blob. It never leaves the device. The avatar shows in the top bar and links to Settings.
 - The logo (sidebar and mobile header) links to the front page.
+
+## Phase 3: recipes and cooking
+
+- `domain/scaling.ts`: kitchen fractions, rounding, metric/imperial display, non-linear ingredient flag.
+- `domain/recipes.ts`: pantry coverage per recipe line (uses `planConsume` on a working copy of stock), proposed deductions, search/filter/sort.
+- `domain/timers.ts`: remaining time is always `endsAt - now`; nothing counts down in memory.
+- `data/starterRecipes.ts`: the bundled cookbook, compiled against catalog names (a typo throws at load and in tests).
+- `data/recipes.ts`: recipe CRUD, collections, cooking sessions. `finishCooking` runs inside one Dexie transaction over sessions, lots, events: a failing row rolls back everything, a finished session cannot be applied again, and each row carries an idempotency key.
+- Cooking sessions persist step, ticked items and timers in the `cookingSessions` table, so a reload resumes exactly where the cook left off.

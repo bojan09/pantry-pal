@@ -12,21 +12,23 @@ import { LivingPantry } from './pantry/LivingPantry';
 import { usePantryData } from './pantry/hooks';
 import { Card, Chip, cx, LinkButton } from '@/design/ui';
 import { addDays, greetingFor, toISODate, weekDays } from '@/lib/dates';
-import { RecipeCard, SampleBanner } from './RecipeCard';
-import { SAMPLE_RECIPES, SAMPLE_WEEK } from './sample';
+import { SampleBanner } from './RecipeCard';
+import { SAMPLE_WEEK } from './sample';
+import { RecipeCard } from './recipes/RecipeCard';
+import { useRecipeLibrary } from './recipes/hooks';
 
 const ZONES: { id: Zone; label: string }[] = [
   { id: 'pantry', label: 'Pantry' },
   { id: 'fridge', label: 'Fridge' },
   { id: 'freezer', label: 'Freezer' },
 ];
-const FILTERS = [
-  'Use my ingredients',
-  'Quick meals',
-  'Vegetarian',
-  'High protein',
-  'Family meals',
-  'Desserts',
+const FILTERS: { label: string; to: string }[] = [
+  { label: 'Use my ingredients', to: '/recipes?ready=1' },
+  { label: 'Quick meals', to: '/recipes?q=quick' },
+  { label: 'Vegetarian', to: '/recipes?q=vegetarian' },
+  { label: 'High protein', to: '/recipes?q=high-protein' },
+  { label: 'Family meals', to: '/recipes?q=family' },
+  { label: 'Desserts', to: '/recipes?q=dessert' },
 ];
 
 const link =
@@ -36,15 +38,26 @@ export function HomePage() {
   const { prefs } = usePrefs();
   const navigate = useNavigate();
   const [zone, setZone] = useState<Zone>('pantry');
-  const [filter, setFilter] = useState(FILTERS[0]);
   const [q, setQ] = useState('');
   const now = new Date();
   const days = weekDays(now, prefs.weekStart);
   const today = toISODate(now);
   const sample = prefs.sampleContent;
 
-  const recipeCount = useLiveQuery(() => db.recipes.count(), [], 0);
   const pantry = usePantryData();
+  const recipeCount = useLiveQuery(() => db.recipes.count(), [], 0);
+  const library = useRecipeLibrary();
+  const hasStock = (pantry?.lots.length ?? 0) > 0;
+  const suggested = (library?.recipes ?? [])
+    .map((r) => ({ r, a: library!.availability.get(r.id) }))
+    .sort((x, y) => {
+      const rx = x.a && x.a.total ? x.a.have / x.a.total : 0;
+      const ry = y.a && y.a.total ? y.a.have / y.a.total : 0;
+      return hasStock
+        ? ry - rx || x.r.prepMinutes + x.r.cookMinutes - (y.r.prepMinutes + y.r.cookMinutes)
+        : x.r.prepMinutes + x.r.cookMinutes - (y.r.prepMinutes + y.r.cookMinutes);
+    })
+    .slice(0, 4);
   const zoneItems = pantry?.byZone(zone) ?? [];
   const zoneStats = {
     ingredients: zoneItems.length,
@@ -132,8 +145,8 @@ export function HomePage() {
           </form>
           <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Recipe filters">
             {FILTERS.map((f) => (
-              <Chip key={f} selected={filter === f} onClick={() => setFilter(f)}>
-                {f}
+              <Chip key={f.label} onClick={() => navigate(f.to)}>
+                {f.label}
               </Chip>
             ))}
           </div>
@@ -209,25 +222,25 @@ export function HomePage() {
         <Card aria-labelledby="suggest-h">
           <div className="flex items-baseline justify-between gap-3">
             <h2 id="suggest-h" className="text-2xl font-semibold">
-              Suggested for you
+              {hasStock ? 'Suggested for you' : 'Quick starters'}
             </h2>
             <Link to="/recipes" className={link}>
-              {sample ? 'Why these recipes?' : 'Browse recipes'}
+              Browse recipes
             </Link>
           </div>
-          {sample ? (
+          <p className="mt-1 text-sm text-ink-soft">
+            {hasStock
+              ? 'Ranked by how much of each recipe your pantry already covers.'
+              : 'Add ingredients to your pantry and these will be ranked by what you already have.'}
+          </p>
+          {suggested.length > 0 && (
             <ul className="mt-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
-              {SAMPLE_RECIPES.slice(0, 4).map((r) => (
+              {suggested.map(({ r, a }) => (
                 <li key={r.id}>
-                  <RecipeCard r={r} />
+                  <RecipeCard recipe={r} availability={hasStock ? a : undefined} />
                 </li>
               ))}
             </ul>
-          ) : (
-            <p className="mt-2 text-ink-soft">
-              Suggestions appear here once you have recipes and ingredients logged. They are matched
-              locally on this device.
-            </p>
           )}
         </Card>
       </div>

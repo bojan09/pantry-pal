@@ -62,6 +62,13 @@ export function StatusBanner() {
     updateServiceWorker,
   } = useRegisterSW();
 
+  // "Ready to work offline" is informational: don't let it sit over the page forever.
+  useEffect(() => {
+    if (!offlineReady) return;
+    const t = setTimeout(() => setOfflineReady(false), 6000);
+    return () => clearTimeout(t);
+  }, [offlineReady, setOfflineReady]);
+
   if (!needRefresh && !offlineReady && online) return null;
   return (
     <div

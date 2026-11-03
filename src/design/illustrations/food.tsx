@@ -270,6 +270,131 @@ export const TomatoIcon = (p: P) => (
   </Wrap>
 );
 
+export const ToastArt = (p: P) => (
+  <Wrap {...p}>
+    {plate}
+    <rect
+      x="24"
+      y="34"
+      width="72"
+      height="52"
+      rx="14"
+      fill="#D9A25B"
+      transform="rotate(-6 60 60)"
+    />
+    <rect
+      x="29"
+      y="39"
+      width="62"
+      height="42"
+      rx="10"
+      fill="#F2D49A"
+      transform="rotate(-6 60 60)"
+    />
+    <path
+      d="M36 52c10-8 18 6 28-2s14 4 22-2"
+      stroke="#C8472B"
+      strokeWidth="7"
+      strokeLinecap="round"
+      fill="none"
+    />
+    <circle cx="48" cy="68" r="5" fill="#FFFDF8" />
+    <circle cx="68" cy="64" r="4" fill="#FFFDF8" />
+    <circle cx="78" cy="72" r="3.4" fill="#FFFDF8" />
+  </Wrap>
+);
+
+export const StewArt = (p: P) => (
+  <Wrap {...p}>
+    <circle cx="60" cy="60" r="56" fill="#6B3B27" />
+    <circle cx="60" cy="60" r="48" fill="#FFFDF8" />
+    <circle cx="60" cy="60" r="39" fill="#A9472B" />
+    <circle cx="60" cy="60" r="31" fill="#C25A34" opacity=".85" />
+    {[
+      [46, 50],
+      [70, 46],
+      [74, 66],
+      [52, 72],
+      [60, 58],
+    ].map(([x, y], i) => (
+      <ellipse
+        key={i}
+        cx={x}
+        cy={y}
+        rx="6"
+        ry="4.2"
+        fill={i % 2 ? '#F1E4CE' : '#8A3B22'}
+        transform={`rotate(${i * 35} ${x} ${y})`}
+      />
+    ))}
+    <path
+      d="M44 84c6-3 12 3 18 0"
+      stroke="#74866B"
+      strokeWidth="3"
+      strokeLinecap="round"
+      fill="none"
+    />
+  </Wrap>
+);
+
+export const CakeArt = (p: P) => (
+  <Wrap {...p}>
+    {plate}
+    <rect x="30" y="44" width="60" height="38" rx="9" fill="#5B3324" />
+    <rect x="30" y="44" width="60" height="14" rx="9" fill="#7A4631" />
+    <path d="M30 58c8 8 12-2 20 6s12-6 20 2 14-4 20 0V56H30z" fill="#7A4631" />
+    <rect x="34" y="62" width="52" height="3" rx="1.5" fill="#E8B95D" opacity=".7" />
+    {[
+      [44, 52],
+      [60, 50],
+      [76, 53],
+    ].map(([x, y], i) => (
+      <circle key={i} cx={x} cy={y} r="3" fill="#F1E4CE" opacity=".8" />
+    ))}
+  </Wrap>
+);
+
+export const SandwichArt = (p: P) => (
+  <Wrap {...p}>
+    {plate}
+    <path d="M24 70c0-22 16-34 36-34s36 12 36 34z" fill="#D9A25B" />
+    <path d="M28 68c1-18 14-28 32-28s31 10 32 28z" fill="#F2D49A" />
+    <rect x="22" y="68" width="76" height="9" rx="4.5" fill="#F4C84A" />
+    <path d="M24 77h72" stroke="#D4432A" strokeWidth="5" strokeLinecap="round" />
+    <rect x="26" y="80" width="68" height="9" rx="4.5" fill="#D9A25B" />
+  </Wrap>
+);
+
+export const RiceArt = (p: P) => (
+  <Wrap {...p}>
+    {plate}
+    <path d="M26 64a34 30 0 0 1 68 0z" fill="#FFFDF8" stroke="#E6D8BF" strokeWidth="2" />
+    {[
+      [40, 58],
+      [50, 52],
+      [62, 50],
+      [74, 54],
+      [82, 60],
+      [56, 60],
+      [68, 61],
+      [46, 62],
+    ].map(([x, y], i) => (
+      <ellipse
+        key={i}
+        cx={x}
+        cy={y}
+        rx="4.4"
+        ry="2"
+        fill="#F6EBD3"
+        transform={`rotate(${i * 40} ${x} ${y})`}
+      />
+    ))}
+    <path d="M24 66h72c0 14-14 24-36 24S24 80 24 66z" fill="#C0582F" />
+    <circle cx="48" cy="46" r="4" fill="#74866B" />
+    <circle cx="72" cy="44" r="3.6" fill="#E8B95D" />
+  </Wrap>
+);
+
 export type ArtKey =
   | 'pasta'
   | 'frittata'
@@ -282,7 +407,12 @@ export type ArtKey =
   | 'milk'
   | 'spinach'
   | 'chicken'
-  | 'yogurt';
+  | 'yogurt'
+  | 'toast'
+  | 'stew'
+  | 'cake'
+  | 'sandwich'
+  | 'rice';
 
 const MAP: Record<ArtKey, (p: P) => React.ReactElement> = {
   pasta: PastaArt,
@@ -297,6 +427,11 @@ const MAP: Record<ArtKey, (p: P) => React.ReactElement> = {
   spinach: SpinachArt,
   chicken: ChickenArt,
   yogurt: YogurtArt,
+  toast: ToastArt,
+  stew: StewArt,
+  cake: CakeArt,
+  sandwich: SandwichArt,
+  rice: RiceArt,
 };
 
 export function Art({ name, ...rest }: P & { name: ArtKey }) {

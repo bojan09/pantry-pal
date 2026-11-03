@@ -399,10 +399,10 @@ export function SettingsPage() {
           </div>
         </Group>
 
-        <Group title="Sample recipes & plan">
+        <Group title="Sample meal plan">
           <p className="text-sm text-ink-soft">
-            Shows illustrative recipes, expiring items and a meal plan, clearly labelled SAMPLE, so
-            you can preview the app. It is not stored and never counted as your data.
+            Shows an illustrative week of meals, clearly labelled SAMPLE, so you can preview the
+            planner. It is not stored and never counted as your data.
           </p>
           <Chip
             selected={prefs.sampleContent}

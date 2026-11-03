@@ -21,3 +21,8 @@ Not covered yet: screen-reader manual testing, real-device performance, cross-br
 - E2E (44 total): add via UI and persistence across reload and offline; field validation; custom ingredient; aggregation, use, undo, partial move, discard confirm/cancel/undo, edit + history; sample load/remove; keyboard activation of shelf items; list filters, search, bulk move; expiring page sections and wording; lead-days setting; Home reflects real stock; layout at 360/390/430/768/1024/1440 (shelves, list, detail, dialog, expiring); axe WCAG A/AA on shelves, list, detail, expiring and the add dialog; pointer cursor and hover animation; Low motion disables transitions; search bar spacing.
 
 Not covered: real-device performance of the shelf animations, screen-reader passes, storage-quota-exceeded behaviour in a real browser.
+
+## Phase 3 coverage
+
+- Unit: fractions/rounding/units (`scaling.test.ts`); starter recipe integrity; CRUD validation; starter read-only; collections; session resume; cancel leaves stock and events untouched; atomic finish with FIFO lots; rollback on a bad row; double-apply and concurrent-apply rejection; availability statuses and shared-stock handling (`recipes.test.ts`).
+- E2E (`e2e/recipes.spec.ts`): search/filter/sort, favourites, scaling, create/edit/delete, duplicate, collections, offline recipe, full cook-through with confirm, stop cooking, timers across reload, phone swipe, axe on recipes/detail/form/collections/history/cooking.

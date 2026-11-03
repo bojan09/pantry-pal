@@ -123,16 +123,39 @@ export interface ShoppingItem extends Stamped {
   unitPrice?: number;
 }
 
+export interface CookingTimer {
+  id: ID;
+  label: string;
+  durationSec: number;
+  startedAt: number;
+  /** wall-clock moment the timer ends; remaining time is always endsAt - now */
+  endsAt: number;
+  /** set once the user has acknowledged a finished timer */
+  dismissed?: boolean;
+}
+
+export interface AppliedDeduction {
+  ingredientId: ID;
+  quantity: number;
+  unit: string;
+}
+
 export interface CookingSession {
   id: ID;
   recipeId: ID;
+  /** kept so history still reads well if the recipe is later deleted */
+  recipeName?: string;
   startedAt: number;
   finishedAt?: number;
   servings: number;
   status: 'active' | 'completed' | 'cancelled';
+  stepIndex?: number;
+  checkedIngredients?: ID[];
+  checkedSteps?: number[];
+  timers?: CookingTimer[];
   rating?: number;
   notes?: string;
-  timers?: { id: ID; label: string; endsAt: number }[];
+  deductions?: AppliedDeduction[];
 }
 
 export interface PreferenceRow {
