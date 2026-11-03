@@ -22,6 +22,10 @@ import { useToast } from '@/app/Toast';
 import { recipes as repo } from '@/data/recipes';
 import type { Collection } from '@/data/types';
 import { groupLots, recipeAvailability, totalMinutes } from '@/domain/recipes';
+import { usableLots } from '@/domain/lots';
+import { matchRecipe } from '@/domain/matching';
+import { useToday } from '../pantry/hooks';
+import { MatchCard } from './MatchCard';
 import { clampServings, formatAmount, isNonLinear } from '@/domain/scaling';
 import { ConfirmDialog } from '../pantry/dialogs';
 import { EntryDialog } from '../planner/EntryDialog';
@@ -142,13 +146,35 @@ export function RecipeDetailPage() {
   const servings = recipe ? clampServings(Number(params.get('servings')) || recipe.servings) : 1;
   const factor = recipe ? servings / recipe.servings : 1;
 
+  const today = useToday();
+  const usable = useMemo(
+    () => (data ? groupLots(usableLots(data.lots, today)) : undefined),
+    [data, today],
+  );
   const avail = useMemo(
     () =>
-      data && recipe
-        ? recipeAvailability(data.lines, factor, groupLots(data.lots), data.ingredients)
+      data && recipe && usable
+        ? recipeAvailability(data.lines, factor, usable, data.ingredients)
         : undefined,
-    [data, recipe, factor],
+    [data, recipe, factor, usable],
   );
+  const match = useMemo(() => {
+    if (!data || !recipe || !usable) return undefined;
+    const base = recipeAvailability(data.lines, 1, usable, data.ingredients);
+    const done = data.sessions.filter((s) => s.status === 'completed' && !s.undoneAt);
+    const last = done.reduce<number | undefined>(
+      (m, s) => Math.max(m ?? 0, s.finishedAt ?? s.startedAt),
+      undefined,
+    );
+    return matchRecipe(recipe, data.lines, base, usable, data.ingredients, groupLots(data.lots), {
+      today,
+      leadDays: prefs.expiryLeadDays,
+      diets: prefs.diets,
+      allergens: prefs.allergens,
+      lastCooked: last,
+      now: Date.parse(`${today}T12:00:00`),
+    });
+  }, [data, recipe, usable, today, prefs.expiryLeadDays, prefs.diets, prefs.allergens]);
 
   if (loading) return <PageHeader title="Recipe" back="/recipes" />;
   if (!data || !recipe || !avail) {
@@ -454,6 +480,8 @@ export function RecipeDetailPage() {
               ))}
             </ol>
           </Card>
+
+          {match && data.lots.length > 0 && <MatchCard match={match} servings={recipe.servings} />}
 
           {recipe.notes && (
             <Card aria-labelledby="notes-h">

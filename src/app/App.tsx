@@ -6,7 +6,7 @@ import { HomePage } from '@/features/HomePage';
 import { ExpiringPage } from '@/features/pantry/ExpiringPage';
 import { IngredientPage } from '@/features/pantry/IngredientPage';
 import { PantryPage } from '@/features/pantry/PantryPage';
-import { AnalyticsPage, MorePage, NotFoundPage } from '@/features/pages';
+import { MorePage, NotFoundPage } from '@/features/pages';
 import { PlannerPage } from '@/features/planner/PlannerPage';
 import { ShoppingPage } from '@/features/shopping/ShoppingPage';
 import { RecipeDetailPage } from '@/features/recipes/RecipeDetailPage';
@@ -18,6 +18,7 @@ const CollectionsPage = lazyPage(
   () => import('@/features/recipes/CollectionsPage'),
   'CollectionsPage',
 );
+const AnalyticsPage = lazyPage(() => import('@/features/analytics/AnalyticsPage'), 'AnalyticsPage');
 const CookingPage = lazyPage(() => import('@/features/recipes/CookingPage'), 'CookingPage');
 const HistoryPage = lazyPage(() => import('@/features/recipes/HistoryPage'), 'HistoryPage');
 const RecipeFormPage = lazyPage(
@@ -76,7 +77,14 @@ const router = createBrowserRouter([
       { path: 'planner', element: <PlannerPage /> },
       { path: 'shopping', element: <ShoppingPage /> },
       { path: 'expiring', element: <ExpiringPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> },
+      {
+        path: 'analytics',
+        element: (
+          <Suspense fallback={null}>
+            <AnalyticsPage />
+          </Suspense>
+        ),
+      },
       {
         path: 'collections',
         element: (

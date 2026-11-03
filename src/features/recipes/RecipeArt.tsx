@@ -22,7 +22,13 @@ export function RecipeArt({
       )}
     >
       {url ? (
-        <img src={url} alt={recipe.name} className="size-full object-cover" />
+        <img
+          src={url}
+          alt={recipe.name}
+          loading="lazy"
+          decoding="async"
+          className="size-full object-cover"
+        />
       ) : (
         <Art name={(recipe.art as ArtKey) ?? 'bowl'} className={artClassName} />
       )}

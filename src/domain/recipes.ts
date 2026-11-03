@@ -154,16 +154,19 @@ export function matchesRecipe(r: Recipe, ingredientTerms: string[], f: RecipeFil
   return terms.every((t) => hay.includes(t));
 }
 
-export type RecipeSort = 'name' | 'time' | 'favorites' | 'recent';
+export type RecipeSort = 'match' | 'name' | 'time' | 'favorites' | 'recent';
 
 export function sortRecipes(
   list: Recipe[],
   sort: RecipeSort,
   lastCooked: Map<string, number>,
+  scores: Map<string, number> = new Map(),
 ): Recipe[] {
   const byName = (a: Recipe, b: Recipe) => a.name.localeCompare(b.name);
   const copy = [...list];
   switch (sort) {
+    case 'match':
+      return copy.sort((a, b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0) || byName(a, b));
     case 'time':
       return copy.sort((a, b) => totalMinutes(a) - totalMinutes(b) || byName(a, b));
     case 'favorites':

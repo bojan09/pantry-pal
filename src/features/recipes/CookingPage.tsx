@@ -44,6 +44,7 @@ import { convert, formatQuantity, tidy, UNITS, unitsForSystem } from '@/domain/u
 import { ConfirmDialog } from '../pantry/dialogs';
 import { RecipeArt } from './RecipeArt';
 import { chime, notifyTimerDone, primeAudio, useWakeLock } from './cookingUtils';
+import { CookedFlourish, useFlourishDelay } from './CookedFlourish';
 import { LotPicker, sumEdits, type LotEdits } from './LotPicker';
 import { useNow, useRecipeDetail, type RecipeDetail } from './hooks';
 
@@ -485,6 +486,8 @@ export function CookingPage() {
   const [sessionId, setSessionId] = useState<string>();
   const [finishOpen, setFinishOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
+  const flourishMs = useFlourishDelay();
   const [dir, setDir] = useState<1 | -1>(1);
   const [showIngredients, setShowIngredients] = useState(false);
   const started = useRef(false);
@@ -556,6 +559,18 @@ export function CookingPage() {
   }
   if (!session)
     return <PageHeader title={`Cooking ${recipe.name}`} back={`/recipes/${recipe.id}`} />;
+
+  // The session turns "completed" the moment it is saved, so the flourish must be shown
+  // before the generic "all done" screen would replace this page.
+  if (celebrating) {
+    return (
+      <CookedFlourish
+        name={recipe.name}
+        ms={flourishMs}
+        onDone={() => navigate(`/recipes/${recipe.id}`, { replace: true })}
+      />
+    );
+  }
 
   if (session.status !== 'active') {
     return (
@@ -792,7 +807,11 @@ export function CookingPage() {
           detail={data}
           factor={factor}
           onClose={() => setFinishOpen(false)}
-          onDone={() => navigate(`/recipes/${recipe.id}`, { replace: true })}
+          onDone={() => {
+            setFinishOpen(false);
+            if (flourishMs === 0) navigate(`/recipes/${recipe.id}`, { replace: true });
+            else setCelebrating(true);
+          }}
         />
       )}
       {cancelOpen && (

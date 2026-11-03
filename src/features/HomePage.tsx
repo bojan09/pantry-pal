@@ -55,14 +55,14 @@ export function HomePage() {
   const library = useRecipeLibrary();
   const hasStock = (pantry?.lots.length ?? 0) > 0;
   const suggested = (library?.recipes ?? [])
-    .map((r) => ({ r, a: library!.availability.get(r.id) }))
-    .sort((x, y) => {
-      const rx = x.a && x.a.total ? x.a.have / x.a.total : 0;
-      const ry = y.a && y.a.total ? y.a.have / y.a.total : 0;
-      return hasStock
-        ? ry - rx || x.r.prepMinutes + x.r.cookMinutes - (y.r.prepMinutes + y.r.cookMinutes)
-        : x.r.prepMinutes + x.r.cookMinutes - (y.r.prepMinutes + y.r.cookMinutes);
-    })
+    .map((r) => ({ r, m: library!.matches.get(r.id) }))
+    .filter((x) => !(prefs.allergens.length && x.m?.allergens.length))
+    .sort((x, y) =>
+      hasStock
+        ? (y.m?.score ?? 0) - (x.m?.score ?? 0) || x.r.name.localeCompare(y.r.name)
+        : x.r.prepMinutes + x.r.cookMinutes - (y.r.prepMinutes + y.r.cookMinutes) ||
+          x.r.name.localeCompare(y.r.name),
+    )
     .slice(0, 4);
   const zoneItems = pantry?.byZone(zone) ?? [];
   const zoneStats = {
@@ -235,14 +235,14 @@ export function HomePage() {
           </div>
           <p className="mt-1 text-sm text-ink-soft">
             {hasStock
-              ? 'Ranked by how much of each recipe your pantry already covers.'
+              ? 'Ranked by pantry coverage, ingredients with a date coming up, speed and variety. Open a recipe to see why.'
               : 'Add ingredients to your pantry and these will be ranked by what you already have.'}
           </p>
           {suggested.length > 0 && (
             <ul className="mt-4 grid grid-cols-2 gap-4 xl:grid-cols-4">
-              {suggested.map(({ r, a }) => (
+              {suggested.map(({ r, m }) => (
                 <li key={r.id}>
-                  <RecipeCard recipe={r} availability={hasStock ? a : undefined} />
+                  <RecipeCard recipe={r} match={hasStock ? m : undefined} />
                 </li>
               ))}
             </ul>

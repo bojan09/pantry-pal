@@ -2,7 +2,7 @@
 
 Offline-first, privacy-first kitchen assistant (PWA): pantry, recipes, cooking mode, meal planner and shopping lists. No account, no backend, no tracking; data lives in your browser (IndexedDB).
 
-**Status:** Phase 4 of 6 done (meal planner + shopping lists). See `MASTER_PLAN.md` and `docs/PHASE_REPORTS.md`.
+**Status:** Phase 5 of 6 done (smart matching, analytics, polish). See `MASTER_PLAN.md` and `docs/PHASE_REPORTS.md`.
 
 ## Develop
 

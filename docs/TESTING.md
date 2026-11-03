@@ -31,3 +31,8 @@ Not covered: real-device performance of the shelf animations, screen-reader pass
 
 - Unit: `domain/shopping` maths through `planShop.test.ts` (consolidation, shared stock, unit mismatch, optional lines, merging, ticked ≠ stocked), planner CRUD/validation/move/duplicate, recipe deletion keeps plans, atomic purchase and rollback.
 - E2E (`e2e/planner.spec.ts`): plan/edit/move/duplicate/remove, drag and drop, week navigation, plan → list → purchase → pantry, lists lifecycle, recipe → list, axe, phone width.
+
+## Phase 5 coverage
+
+- Unit: matching (tiers, partial credit, use-soon, past use-by, point deltas, determinism) and analytics (reconciliation of every bucket, undone/cancelled exclusion, currency separation, used-before-date evidence).
+- E2E (`e2e/phase5.spec.ts`, `e2e/limits.spec.ts`): ranking and explanation, allergen/diet filters, past-use-by, analytics totals vs sample data, flourish vs Low/reduce-motion, lazy chunks, axe.

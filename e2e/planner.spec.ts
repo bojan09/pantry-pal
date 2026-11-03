@@ -19,6 +19,9 @@ async function loadSample(page: Page) {
 const dialog = (page: Page) => page.getByRole('dialog');
 
 async function plan(page: Page, search: string, slotButton = 'Add to Dinner on') {
+  // Earlier days are skipped by shopping generation, so plan on today's weekday by default.
+  if (slotButton === 'Add to Dinner on')
+    slotButton += ` ${new Date().toLocaleDateString('en', { weekday: 'long' })}`;
   await page
     .getByRole('button', { name: new RegExp(slotButton) })
     .first()

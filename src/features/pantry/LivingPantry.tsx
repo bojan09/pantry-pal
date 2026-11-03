@@ -4,6 +4,7 @@ import { colorFor, ItemSprite } from '@/design/illustrations/sprites';
 import { spriteKindFor } from '@/data/catalog';
 import { statusText, type IngredientSummary } from '@/domain/lots';
 import { formatTotals } from './format';
+import { usePrefs } from '@/app/PrefsProvider';
 
 const PER_ROW = 8;
 const ROWS = [
@@ -39,6 +40,8 @@ export function LivingPantry({
   onOverflow?: () => void;
   className?: string;
 }) {
+  const { prefs } = usePrefs();
+  const cinematic = prefs.motion === 'cinematic';
   const sorted = [...items].sort(
     (a, b) =>
       a.ingredient.category.localeCompare(b.ingredient.category) ||
@@ -66,7 +69,7 @@ export function LivingPantry({
               style={{ bottom: `${row.bottom}%`, height: '21%' }}
             >
               <AnimatePresence initial={false}>
-                {shown.slice(r * PER_ROW, (r + 1) * PER_ROW).map((s) => {
+                {shown.slice(r * PER_ROW, (r + 1) * PER_ROW).map((s, col) => {
                   const name = s.ingredient.name;
                   const label = `${name}, ${formatTotals(s.totals, system)}${s.low ? ', low stock' : ''}. ${s.nextLot ? statusText(s.nextLot, today, leadDays) : ''}`;
                   return (
@@ -77,8 +80,13 @@ export function LivingPantry({
                       initial={{ opacity: 0, y: -24, scale: 0.8 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -16, scale: 0.8 }}
-                      transition={{ type: 'spring', stiffness: 380, damping: 22 }}
-                      whileHover={{ y: -6 }}
+                      transition={{
+                        type: 'spring',
+                        stiffness: 380,
+                        damping: 22,
+                        delay: cinematic ? (r * PER_ROW + col) * 0.03 : 0,
+                      }}
+                      whileHover={cinematic ? { y: -8, rotate: -2 } : { y: -6 }}
                       onClick={() => onSelect(s.ingredient.id)}
                       aria-label={label}
                       title={`${name} · ${formatTotals(s.totals, system)}`}

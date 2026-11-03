@@ -3,6 +3,10 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import type { Collection, CookingSession, Ingredient, Recipe } from '@/data/types';
 import { groupLots, recipeAvailability, type RecipeAvailability } from '@/domain/recipes';
+import { usableLots } from '@/domain/lots';
+import { matchRecipe, type Match } from '@/domain/matching';
+import { usePrefs } from '@/app/PrefsProvider';
+import { useToday } from '../pantry/hooks';
 
 /** Current time, ticking while `active`. Timers display from stored end timestamps. */
 export function useNow(active = true, everyMs = 250): number {
@@ -27,12 +31,15 @@ export interface RecipeLibrary {
   /** per recipe: ingredient names + aliases for searching */
   terms: Map<string, string[]>;
   availability: Map<string, RecipeAvailability>;
+  matches: Map<string, Match>;
   lastCooked: Map<string, number>;
   cookedCount: Map<string, number>;
 }
 
 /** Live view of every recipe with its pantry coverage. `undefined` until the first read. */
 export function useRecipeLibrary(): RecipeLibrary | undefined {
+  const { prefs } = usePrefs();
+  const today = useToday();
   const raw = useLiveQuery(async () => {
     const [recipes, lines, collections, ingredients, lots, sessions] = await Promise.all([
       db.recipes.toArray(),
@@ -47,7 +54,9 @@ export function useRecipeLibrary(): RecipeLibrary | undefined {
   return useMemo(() => {
     if (!raw) return undefined;
     const ingredients = new Map(raw.ingredients.map((i) => [i.id, i]));
-    const lotsBy = groupLots(raw.lots);
+    const usable = usableLots(raw.lots, today);
+    const lotsBy = groupLots(usable);
+    const allBy = groupLots(raw.lots);
     const byRecipe = new Map<string, typeof raw.lines>();
     for (const l of raw.lines) {
       const a = byRecipe.get(l.recipeId);
@@ -56,6 +65,15 @@ export function useRecipeLibrary(): RecipeLibrary | undefined {
     }
     const terms = new Map<string, string[]>();
     const availability = new Map<string, RecipeAvailability>();
+    const matches = new Map<string, Match>();
+    const lastCooked = new Map<string, number>();
+    const cookedCount = new Map<string, number>();
+    for (const s of raw.sessions) {
+      const at = s.finishedAt ?? s.startedAt;
+      lastCooked.set(s.recipeId, Math.max(lastCooked.get(s.recipeId) ?? 0, at));
+      cookedCount.set(s.recipeId, (cookedCount.get(s.recipeId) ?? 0) + 1);
+    }
+    const now = Date.parse(`${today}T12:00:00`);
     for (const r of raw.recipes) {
       const lines = (byRecipe.get(r.id) ?? []).sort((a, b) => a.position - b.position);
       terms.set(
@@ -65,14 +83,19 @@ export function useRecipeLibrary(): RecipeLibrary | undefined {
           return i ? [i.name, ...i.aliases] : [];
         }),
       );
-      availability.set(r.id, recipeAvailability(lines, 1, lotsBy, ingredients));
-    }
-    const lastCooked = new Map<string, number>();
-    const cookedCount = new Map<string, number>();
-    for (const s of raw.sessions) {
-      const at = s.finishedAt ?? s.startedAt;
-      lastCooked.set(s.recipeId, Math.max(lastCooked.get(s.recipeId) ?? 0, at));
-      cookedCount.set(s.recipeId, (cookedCount.get(s.recipeId) ?? 0) + 1);
+      const avail = recipeAvailability(lines, 1, lotsBy, ingredients);
+      availability.set(r.id, avail);
+      matches.set(
+        r.id,
+        matchRecipe(r, lines, avail, lotsBy, ingredients, allBy, {
+          today,
+          leadDays: prefs.expiryLeadDays,
+          diets: prefs.diets,
+          allergens: prefs.allergens,
+          lastCooked: lastCooked.get(r.id),
+          now,
+        }),
+      );
     }
     return {
       recipes: raw.recipes,
@@ -80,10 +103,11 @@ export function useRecipeLibrary(): RecipeLibrary | undefined {
       ingredients,
       terms,
       availability,
+      matches,
       lastCooked,
       cookedCount,
     };
-  }, [raw]);
+  }, [raw, today, prefs.expiryLeadDays, prefs.diets, prefs.allergens]);
 }
 
 export interface RecipeDetail {

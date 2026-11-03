@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
-import { Heart, Clock } from 'lucide-react';
+import { Heart, Clock, Zap } from 'lucide-react';
 import { recipes as repo } from '@/data/recipes';
 import type { Recipe } from '@/data/types';
-import { totalMinutes, type RecipeAvailability } from '@/domain/recipes';
+import { totalMinutes } from '@/domain/recipes';
+import { tierLabel, type Match } from '@/domain/matching';
 import { useToast } from '@/app/Toast';
-import { MatchPill } from '../RecipeCard';
 import { RecipeArt } from './RecipeArt';
 
 export function FavoriteButton({
@@ -38,13 +38,24 @@ export function FavoriteButton({
   );
 }
 
-export function RecipeCard({
-  recipe,
-  availability,
-}: {
-  recipe: Recipe;
-  availability?: RecipeAvailability;
-}) {
+export function TierBadge({ match }: { match: Match }) {
+  const cls =
+    match.tier === 'ready'
+      ? 'bg-good-soft text-good'
+      : match.tier === 'nearly'
+        ? 'bg-warn-soft text-warn'
+        : 'bg-surface-2 text-ink-soft';
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${cls}`}
+    >
+      <Zap aria-hidden className="size-3.5" />
+      {tierLabel(match.tier, match.missing.length)}
+    </span>
+  );
+}
+
+export function RecipeCard({ recipe, match }: { recipe: Recipe; match?: Match }) {
   const mins = totalMinutes(recipe);
   return (
     <div className="pp-card group relative grid overflow-hidden p-0 pp-lift">
@@ -57,9 +68,14 @@ export function RecipeCard({
             {mins > 0 ? `${mins} min` : 'No cooking'} · {recipe.difficulty}
             {recipe.cuisine ? ` · ${recipe.cuisine}` : ''}
           </p>
-          {availability && availability.total > 0 && (
-            <div className="mt-1">
-              <MatchPill have={availability.have} total={availability.total} />
+          {match && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              <TierBadge match={match} />
+              {match.allergens.length > 0 && (
+                <span className="inline-flex items-center rounded-full bg-bad-soft px-3 py-1 text-xs font-semibold text-bad">
+                  Contains {match.allergens.join(', ')}
+                </span>
+              )}
             </div>
           )}
         </div>

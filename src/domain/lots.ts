@@ -207,3 +207,15 @@ export function groupByIngredient(
     .filter((i) => byIng.has(i.id))
     .map((i) => summarize(i, byIng.get(i.id)!, today, leadDays));
 }
+
+/**
+ * Stock that should count towards recipe matching: lots past a *use-by* date are left out. A
+ * past best-before date is a quality date, so those lots still count (their status is shown
+ * wherever they appear). This is a conservative app rule, not a statement that anything is safe.
+ */
+export function usableLots<T extends Pick<InventoryLot, 'date' | 'dateLabel'>>(
+  lots: T[],
+  today: string,
+): T[] {
+  return lots.filter((l) => !(l.dateLabel === 'use_by' && l.date && daysUntil(l.date, today) < 0));
+}

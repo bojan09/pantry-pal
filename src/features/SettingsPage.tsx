@@ -273,8 +273,10 @@ export function SettingsPage() {
               onChange={set('motion')}
             />
             <p className="text-sm text-ink-soft">
-              Low turns animations off. Your system&apos;s reduce-motion setting is always
-              respected.
+              Low: no animation, best for older devices and battery. Balanced: page and shelf
+              transitions and a short cooking finish. Cinematic: adds staggered shelves, hover
+              flourishes and a longer cooking finish with steam. Your system&apos;s reduce-motion
+              setting is always respected.
             </p>
           </div>
         </Group>

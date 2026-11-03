@@ -110,6 +110,8 @@ test.describe('add + persist', () => {
     await d.getByRole('button', { name: /Create .Harissa./ }).click();
     await d.getByLabel('Category').selectOption('Oils & Sauces');
     await d.getByRole('button', { name: 'Create ingredient' }).click();
+    // wait for the new ingredient to be saved and selected, not just for matching text
+    await expect(d.getByRole('button', { name: 'Change' })).toBeVisible();
     await expect(d.getByText('Harissa', { exact: true })).toBeVisible();
     await d.getByLabel('Quantity').fill('150');
     await d.getByRole('radio', { name: 'No date' }).click();

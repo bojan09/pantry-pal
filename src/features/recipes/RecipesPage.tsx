@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BookOpen, FileUp, History, Layers, Plus, Search } from 'lucide-react';
 import { Button, Card, Chip, EmptyState, inputClass, LinkButton, PageHeader } from '@/design/ui';
+import { usePrefs } from '@/app/PrefsProvider';
 import {
   emptyFilters,
   matchesRecipe,
@@ -23,7 +24,10 @@ export function RecipesPage() {
   const lib = useRecipeLibrary();
   const [params, setParams] = useSearchParams();
   const [f, setF] = useState<RecipeFilters>(emptyFilters);
-  const [sort, setSort] = useState<RecipeSort>('name');
+  const { prefs } = usePrefs();
+  const [sortChoice, setSort] = useState<RecipeSort | null>(null);
+  const [avoid, setAvoid] = useState(true);
+  const [dietOnly, setDietOnly] = useState(false);
   const [importing, setImporting] = useState(false);
   const q = params.get('q') ?? '';
   const collectionId = params.get('collection') ?? '';
@@ -35,6 +39,8 @@ export function RecipesPage() {
     setParams(next, { replace: true });
   };
 
+  const hasStock = !!lib && [...lib.availability.values()].some((a) => a.have > 0);
+  const sort: RecipeSort = sortChoice ?? (hasStock ? 'match' : 'name');
   const shown = useMemo(() => {
     if (!lib) return [];
     const col = lib.collections.find((c) => c.id === collectionId);
@@ -43,13 +49,18 @@ export function RecipesPage() {
       q,
       collectionRecipeIds: col ? new Set(col.recipeIds) : null,
     };
-    const list = lib.recipes.filter(
-      (r) =>
+    const list = lib.recipes.filter((r) => {
+      const m = lib.matches.get(r.id);
+      return (
         matchesRecipe(r, lib.terms.get(r.id) ?? [], filters) &&
-        (!readyOnly || lib.availability.get(r.id)?.ready),
-    );
-    return sortRecipes(list, sort, lib.lastCooked);
-  }, [lib, f, q, sort, readyOnly, collectionId]);
+        (!readyOnly || lib.availability.get(r.id)?.ready) &&
+        (!avoid || !prefs.allergens.length || !m?.allergens.length) &&
+        (!dietOnly || !prefs.diets.length || !!m?.diets.length)
+      );
+    });
+    const scores = new Map([...lib.matches].map(([id, m]) => [id, m.score]));
+    return sortRecipes(list, sort, lib.lastCooked, scores);
+  }, [lib, f, q, sort, readyOnly, collectionId, avoid, dietOnly, prefs.allergens, prefs.diets]);
 
   const set = (patch: Partial<RecipeFilters>) => setF((cur) => ({ ...cur, ...patch }));
   const setQ = (v: string) => {
@@ -115,6 +126,16 @@ export function RecipesPage() {
             <Chip selected={readyOnly} onClick={() => setReadyOnly(!readyOnly)}>
               I can make it now
             </Chip>
+            {prefs.allergens.length > 0 && (
+              <Chip selected={avoid} onClick={() => setAvoid(!avoid)}>
+                Hide recipes with my allergens
+              </Chip>
+            )}
+            {prefs.diets.length > 0 && (
+              <Chip selected={dietOnly} onClick={() => setDietOnly(!dietOnly)}>
+                Matches my diet tags
+              </Chip>
+            )}
             <select
               aria-label="Category"
               className={selectClass}
@@ -189,6 +210,7 @@ export function RecipesPage() {
                 value={sort}
                 onChange={(e) => setSort(e.target.value as RecipeSort)}
               >
+                <option value="match">Best match for my pantry</option>
                 <option value="name">Name</option>
                 <option value="time">Total time</option>
                 <option value="favorites">Favourites first</option>
@@ -196,6 +218,13 @@ export function RecipesPage() {
               </select>
             </label>
           </div>
+          {(prefs.allergens.length > 0 || prefs.diets.length > 0) && (
+            <p className="text-xs text-ink-soft">
+              Allergen and diet filters use only the ingredient data and tags saved in this app,
+              which can be incomplete. They are a convenience, not medical or safety advice. Always
+              check labels.
+            </p>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-ink-soft">
             <p aria-live="polite">
               {lib ? `${shown.length} of ${lib.recipes.length} recipes` : 'Loading recipes…'}
@@ -230,7 +259,7 @@ export function RecipesPage() {
           <ul className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
             {shown.map((r) => (
               <li key={r.id}>
-                <RecipeCard recipe={r} availability={lib.availability.get(r.id)} />
+                <RecipeCard recipe={r} match={hasStock ? lib.matches.get(r.id) : undefined} />
               </li>
             ))}
           </ul>

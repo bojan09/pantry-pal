@@ -67,3 +67,29 @@ Decisions and limits:
 - Not done: reordering within a cell (entries keep creation order), a month view, recurring plans, template weeks.
 
 Tests: 100 unit/integration (planner CRUD/validation, needs maths, merging, price estimate, atomic purchase and rollback), E2E for planning, moving, drag and drop, week navigation, generation, lists, budget, copy, purchase into pantry, axe.
+
+### Limits fixed after Phase 4
+
+- Cooking: choose exact lots per ingredient (the earliest-first suggestion is pre-filled); undo a finished cook from the history page (refuses when a lot was edited since, so it cannot create food).
+- Recipes: export one recipe as JSON; import from a file or pasted text with a preview. Validation rejects wrong format, newer version, unknown units, oversized and malformed files. Unknown ingredients are added as your own.
+- Timers: opt-in browser notifications while the app is open. A closed web app cannot ring: that is a platform limit, stated in the UI.
+- Planner: reorder inside a meal, drop at a position, press-and-hold touch drag, repeat daily/weekly, copy a week, month view, earlier not-done meals excluded from shopping with a visible note.
+
+## Phase 5: Smart matching, analytics and polish
+
+Status: delivered, awaiting review.
+
+Scope:
+- Matching: a deterministic score out of 100 (pantry coverage 55, ingredients with a date coming up 20, speed 10, variety 10, favourite 5). Every point is shown with its reason on the recipe page. Tiers: Ready to cook, Nearly ready (at most two required items missing and at least 60% covered), Missing. Stock past a use-by date is not counted (past best-before still counts) and the page says so. Use-soon boosts never apply to past-date stock and carry no safety claim.
+- Preferences: allergen and diet filters from Settings, informational only. The UI says the data can be incomplete and is not advice.
+- Analytics (lazy-loaded): pantry composition, storage, date windows, cooks per week, most-used ingredients, planned variety, estimated costs per list, uses before a date. Filters for period, category and place. Each chart states its formula and has a text alternative (legend, numbers, table). No placeholder data.
+- Polish: staggered shelf entry and hover flourishes (Cinematic), cooking finish flourish (Balanced short, Cinematic longer, none for Low or reduce-motion), lazy images, clear motion-level descriptions.
+
+Decisions and limits:
+- Charts are hand-drawn SVG/HTML rather than a charting library, to keep the bundle small and every number readable as text.
+- "Avoided waste" is not estimated. The only waste-related figure is "used before the date", counted from your own use records.
+- Matching works on one recipe at its own servings; the page shows availability for the servings you pick.
+- The ranking weights are a judgement call, not learned. They are documented and tested; say if you want different weights.
+- No frame-rate measurement on real devices was possible here; motion is CSS/transform based and can be turned off.
+
+Tests: 110 unit/integration + matching/analytics domain tests, and E2E for ranking, explanations, allergens/diet, past-use-by handling, analytics reconciliation, flourish and reduced motion, lazy chunks, axe.

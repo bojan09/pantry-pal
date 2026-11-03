@@ -59,3 +59,10 @@ react, react-dom, react-router-dom, dexie, dexie-react-hooks, zod, motion, lucid
 - `domain/planning.ts`: slots and cell ordering.
 - `data/planner.ts`: validated entry CRUD; `data/shopping.ts`: lists, items, `applyNeeds` (merge), `stockPurchased` (one transaction over items, lots and events; each item has a `purchase:<id>` idempotency key).
 - The planner never writes inventory. Stock changes only from cooking (Phase 3) or a confirmed purchase.
+
+## Phase 5: matching and analytics
+
+- `domain/matching.ts`: `matchRecipe` returns the score parts (label, points, max, note), tier, missing lines, use-soon names, allergens/diets from the data entered, and whether past-use-by stock was skipped.
+- `domain/lots.usableLots`: the single rule for which stock counts for matching.
+- `domain/analytics.ts`: pure functions over lots, sessions, events, plans and lists; every chart on the page is one of these.
+- `features/analytics`: lazy route; charts are small SVG/HTML components with text equivalents.

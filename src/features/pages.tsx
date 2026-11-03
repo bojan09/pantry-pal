@@ -1,23 +1,7 @@
 import { Link } from 'react-router-dom';
-import { BarChart3 } from 'lucide-react';
 import { Sprig } from '@/design/illustrations';
 import { Card, EmptyState, LinkButton, PageHeader } from '@/design/ui';
 import { MORE_ITEMS } from '@/app/nav';
-
-export function AnalyticsPage() {
-  return (
-    <>
-      <PageHeader title="Analytics" subtitle="Built only from what you record." back="/more" />
-      <Card>
-        <EmptyState
-          art={<BarChart3 aria-hidden className="size-full text-accent-bright" />}
-          title="No data yet"
-          body="Charts appear after you log ingredients and cook recipes. Nothing is estimated or invented."
-        />
-      </Card>
-    </>
-  );
-}
 
 export function MorePage() {
   return (
