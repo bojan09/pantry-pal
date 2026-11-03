@@ -267,3 +267,32 @@ describe('sample pantry', () => {
     expect(await db.inventoryEvents.count()).toBe(1);
   });
 });
+
+describe('catalog v2: jar units', () => {
+  it('defaults ajvar and pickles to medium jars and upgrades an older catalog without touching lots or custom items', async () => {
+    expect((await db.ingredients.get('ing-ajvar'))!.defaultUnit).toBe('jar-m');
+    // simulate a v1 database
+    await db.ingredients.update('ing-ajvar', { defaultUnit: 'g' });
+    const custom = await inv.createIngredient({
+      name: 'My relish',
+      category: 'Other',
+      defaultUnit: 'g',
+    });
+    const lot = await inv.addLot(base({ ingredientId: 'ing-ajvar', quantity: 200, unit: 'g' }));
+    await db.preferences.put({ key: 'catalogVersion', value: 1 });
+    await ensureCatalog(db);
+    expect((await db.ingredients.get('ing-ajvar'))!.defaultUnit).toBe('jar-m');
+    expect((await db.ingredients.get(custom.id))!.defaultUnit).toBe('g');
+    expect(await qty(lot.id)).toBe(200);
+  });
+  it('tracks jar sizes separately: sizes never merge or convert', async () => {
+    await inv.addLot(base({ ingredientId: 'ing-ajvar', quantity: 2, unit: 'jar-s' }));
+    await inv.addLot(base({ ingredientId: 'ing-ajvar', quantity: 1, unit: 'jar-l' }));
+    await expect(inv.consume('ing-ajvar', 1, 'jar-m')).rejects.toMatchObject({
+      code: 'incompatible',
+    });
+    await inv.consume('ing-ajvar', 1, 'jar-s');
+    const lots = await db.inventoryLots.where('ingredientId').equals('ing-ajvar').toArray();
+    expect(lots.map((l) => `${l.quantity} ${l.unit}`).sort()).toEqual(['1 jar-l', '1 jar-s']);
+  });
+});

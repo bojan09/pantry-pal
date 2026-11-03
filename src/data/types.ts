@@ -142,7 +142,7 @@ export interface PreferenceRow {
 
 export interface MediaAsset {
   id: ID;
-  kind: 'background' | 'recipe';
+  kind: 'background' | 'recipe' | 'avatar';
   mime: string;
   width: number;
   height: number;

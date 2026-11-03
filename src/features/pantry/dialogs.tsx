@@ -6,7 +6,7 @@ import { CATEGORIES } from '@/data/catalog';
 import { InventoryError, inventory, lotInputSchema, type LotInput } from '@/data/inventory';
 import type { Ingredient, InventoryLot, StorageZone } from '@/data/types';
 import { totalsFor } from '@/domain/lots';
-import { UNITS, unitsForSystem } from '@/domain/units';
+import { UNITS, unitLabel, unitsForSystem } from '@/domain/units';
 import { usePrefs } from '@/app/PrefsProvider';
 import { useToast } from '@/app/Toast';
 import { Button, Dialog, Field, inputClass, Segmented } from '@/design/ui';
@@ -452,7 +452,7 @@ export function LotFormDialog({
               </Field>
             </div>
             <div className="grid grid-cols-2 gap-3">
-              <Field label={`Package size (${unit})`}>
+              <Field label={`Package size (${unitLabel(unit)})`}>
                 {(id) => (
                   <input
                     id={id}
@@ -467,7 +467,7 @@ export function LotFormDialog({
                 )}
               </Field>
               <Field
-                label={`Low-stock alert at (${unit})`}
+                label={`Low-stock alert at (${unitLabel(unit)})`}
                 hint="Flags this ingredient when total stock falls to this."
               >
                 {(id) => (
@@ -651,7 +651,7 @@ export function MoveDialog({ lots, onClose }: { lots: InventoryLot[]; onClose: (
         )}
         {single && (
           <Field
-            label={`How much? (up to ${single.quantity} ${single.unit})`}
+            label={`How much? (up to ${formatQuantity(single.quantity, single.unit)})`}
             hint="Moving part of it splits it into two lots with the same date."
           >
             {(id) => (

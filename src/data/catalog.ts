@@ -98,9 +98,9 @@ const ROWS: Row[] = [
   ['Canned tuna', 'Canned & Jarred', 'can', undefined, ['fish']],
   ['Coconut milk', 'Canned & Jarred', 'can', 0.97],
   ['Tomato paste', 'Canned & Jarred', 'g', 1.1, undefined, ['tomato puree']],
-  ['Olives', 'Canned & Jarred', 'g'],
-  ['Pickles', 'Canned & Jarred', 'g'],
-  ['Jam', 'Canned & Jarred', 'g', 1.3],
+  ['Olives', 'Canned & Jarred', 'jar-m'],
+  ['Pickles', 'Canned & Jarred', 'jar-m'],
+  ['Jam', 'Canned & Jarred', 'jar-m', 1.3],
   // Baking
   ['Flour', 'Baking', 'g', 0.53, ['gluten'], ['all-purpose flour', 'plain flour']],
   ['Sugar', 'Baking', 'g', 0.85],
@@ -130,7 +130,7 @@ const ROWS: Row[] = [
   ['Ketchup', 'Oils & Sauces', 'g', 1.15],
   ['Mustard', 'Oils & Sauces', 'g'],
   ['Mayonnaise', 'Oils & Sauces', 'g', 0.91, ['eggs']],
-  ['Ajvar', 'Oils & Sauces', 'g'],
+  ['Ajvar', 'Oils & Sauces', 'jar-m'],
   // Snacks & Sweets
   ['Chocolate', 'Snacks & Sweets', 'g'],
   ['Biscuits', 'Snacks & Sweets', 'pack', undefined, ['gluten']],
@@ -155,7 +155,8 @@ const slug = (s: string) =>
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-export const CATALOG_VERSION = 1;
+/** v2: jar-sized units for ajvar, pickles, olives and jam. */
+export const CATALOG_VERSION = 2;
 
 /** Stable ids ("ing-tomatoes") make seeding idempotent and let backups reference catalog items. */
 export const CATALOG: Ingredient[] = ROWS.map(
@@ -179,12 +180,13 @@ export type SpriteKind =
 export function spriteKindFor(
   i: Pick<Ingredient, 'category' | 'defaultUnit' | 'name'>,
 ): SpriteKind {
+  if (i.defaultUnit.startsWith('jar')) return 'jar';
   switch (i.category) {
     case 'Vegetables':
     case 'Fruit':
       return 'produce';
     case 'Dairy & Eggs':
-      return i.defaultUnit === 'pcs' ? 'carton' : 'carton';
+      return 'carton';
     case 'Meat & Fish':
       return 'tray';
     case 'Grains & Pasta':

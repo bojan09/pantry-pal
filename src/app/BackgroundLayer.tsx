@@ -1,20 +1,11 @@
-import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useMemo } from 'react';
-import { db } from '@/data/db';
+import { useMediaUrl } from './useMediaUrl';
 import { BotanicalCorner } from '@/design/illustrations';
 import { usePrefs } from './PrefsProvider';
-
-function useBackgroundUrl(id: string | undefined) {
-  const asset = useLiveQuery(() => (id ? db.mediaAssets.get(id) : undefined), [id]);
-  const url = useMemo(() => (asset?.blob ? URL.createObjectURL(asset.blob) : undefined), [asset]);
-  useEffect(() => () => (url ? URL.revokeObjectURL(url) : undefined), [url]);
-  return url;
-}
 
 /** Fixed, non-interactive layer behind the app. Text always sits on opaque-ish cards. */
 export function BackgroundLayer() {
   const { prefs } = usePrefs();
-  const customUrl = useBackgroundUrl(
+  const customUrl = useMediaUrl(
     prefs.background === 'custom' ? prefs.customBackgroundId : undefined,
   );
 

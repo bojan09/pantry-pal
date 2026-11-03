@@ -1,9 +1,9 @@
 import type { Amount, ExpiryStatus } from '@/domain/lots';
-import { formatBase } from '@/domain/units';
+import { formatBase, formatQuantity } from '@/domain/units';
 import type { StorageZone } from '@/data/types';
 
 export function formatAmount(a: Amount, system: 'metric' | 'imperial'): string {
-  if (a.dimension === 'count') return `${Number(a.base.toFixed(3))} ${a.unit}`;
+  if (a.dimension === 'count') return formatQuantity(a.base, a.unit);
   return formatBase(a.base, a.dimension, system);
 }
 

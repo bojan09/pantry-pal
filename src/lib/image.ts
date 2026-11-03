@@ -19,3 +19,25 @@ export async function downscaleImage(
   if (!blob) throw new Error('Could not process that image.');
   return { blob, width, height };
 }
+
+/** Centre-crops an image to a square JPEG of `size` px, for profile pictures. */
+export async function squareAvatar(
+  file: File,
+  size = 256,
+): Promise<{ blob: Blob; width: number; height: number }> {
+  if (!/^image\/(jpeg|png|webp)$/.test(file.type))
+    throw new Error('Choose a JPEG, PNG or WebP image.');
+  if (file.size > 15 * 1024 * 1024) throw new Error('That image is larger than 15 MB.');
+  const bmp = await createImageBitmap(file);
+  const side = Math.min(bmp.width, bmp.height);
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  canvas
+    .getContext('2d')!
+    .drawImage(bmp, (bmp.width - side) / 2, (bmp.height - side) / 2, side, side, 0, 0, size, size);
+  bmp.close();
+  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.85));
+  if (!blob) throw new Error('Could not process that image.');
+  return { blob, width: size, height: size };
+}

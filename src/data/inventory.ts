@@ -3,7 +3,7 @@ import { db as defaultDb } from './db';
 import { CATALOG, CATALOG_VERSION } from './catalog';
 import type { DateLabel, Ingredient, InventoryEvent, InventoryLot, StorageZone } from './types';
 import { planConsume } from '@/domain/lots';
-import { convert, dimensionOf, isKnownUnit, tidy } from '@/domain/units';
+import { convert, dimensionOf, formatQuantity, isKnownUnit, tidy, unitLabel } from '@/domain/units';
 import { newId } from '@/lib/ids';
 import { z } from 'zod';
 
@@ -179,8 +179,8 @@ export function createInventory(database: PantryDB = defaultDb) {
       if (!plan.ok) {
         const msg = {
           invalid: 'Enter a quantity greater than 0',
-          incompatible: `You have no ${ing.name} that can be measured in ${unit}`,
-          insufficient: `Only ${plan.available} ${unit} available`,
+          incompatible: `You have no ${ing.name} that can be measured in ${unitLabel(unit)}`,
+          insufficient: `Only ${formatQuantity(plan.available ?? 0, unit)} available`,
         }[plan.reason];
         throw new InventoryError(msg, plan.reason === 'invalid' ? 'invalid' : plan.reason);
       }
@@ -224,7 +224,10 @@ export function createInventory(database: PantryDB = defaultDb) {
       if (!Number.isFinite(qty) || qty <= 0)
         throw new InventoryError('Enter a quantity greater than 0', 'invalid');
       if (qty > lot.quantity + 1e-9)
-        throw new InventoryError(`Only ${lot.quantity} ${lot.unit} available`, 'insufficient');
+        throw new InventoryError(
+          `Only ${formatQuantity(lot.quantity, lot.unit)} available`,
+          'insufficient',
+        );
       if (zone === 'custom' && !customZoneName?.trim())
         throw new InventoryError('Name this place', 'invalid');
       const name = zone === 'custom' ? customZoneName!.trim() : undefined;
@@ -371,14 +374,23 @@ export const inventory = createInventory();
 export async function ensureCatalog(database: PantryDB = defaultDb): Promise<number> {
   const row = await database.preferences.get('catalogVersion');
   if (row?.value === CATALOG_VERSION) return 0;
-  const have = new Set(await database.ingredients.toCollection().primaryKeys());
-  const missing = CATALOG.filter((c) => !have.has(c.id)).map((c) => ({
+  const existing = new Map((await database.ingredients.toArray()).map((i) => [i.id, i]));
+  const now = Date.now();
+  const missing = CATALOG.filter((c) => !existing.has(c.id)).map((c) => ({
     ...c,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
+    createdAt: now,
+    updatedAt: now,
   }));
+  // Built-in items get the current usual unit (e.g. ajvar moved from grams to jars). Custom
+  // ingredients and existing lots are never touched.
+  const refreshed = CATALOG.filter((c) => {
+    const have = existing.get(c.id);
+    return have && !have.isCustom && have.defaultUnit !== c.defaultUnit;
+  });
   await database.transaction('rw', database.ingredients, database.preferences, async () => {
     if (missing.length) await database.ingredients.bulkAdd(missing);
+    for (const c of refreshed)
+      await database.ingredients.update(c.id, { defaultUnit: c.defaultUnit, updatedAt: now });
     await database.preferences.put({ key: 'catalogVersion', value: CATALOG_VERSION });
   });
   return missing.length;

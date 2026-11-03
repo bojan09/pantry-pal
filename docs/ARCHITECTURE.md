@@ -37,3 +37,9 @@ react, react-dom, react-router-dom, dexie, dexie-react-hooks, zod, motion, lucid
 - **Living Pantry** draws one sprite per ingredient in the zone from the logged data. The list view is the full-size accessible alternative.
 - **Expiry wording** never claims safety; use-by and best-before are described differently and every expiry surface carries the caveat.
 - **Routing detail.** The shell uses `useOutlet()` inside `AnimatePresence`. With `<Outlet/>` the incoming page mounted twice and destroyed anything opened in that window.
+
+## Update: jars and profile picture
+
+- **Jar sizes** (small, medium, large) are separate count units. A small jar is not a large jar, so they never merge or convert, like cans and pieces. Ajvar, pickles, olives and jam default to a medium jar. Catalog v2 refreshes the usual unit of built-in items only; existing lots and custom ingredients are untouched. Count units pluralise in display ("2 small jars").
+- **Profile picture** is centre-cropped to a 256 px JPEG in the browser and stored in `mediaAssets` (kind `avatar`), referenced by `prefs.avatarId`. Replacing or removing deletes the old blob. It never leaves the device. The avatar shows in the top bar and links to Settings.
+- The logo (sidebar and mobile header) links to the front page.

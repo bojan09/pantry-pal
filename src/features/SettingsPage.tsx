@@ -5,7 +5,8 @@ import { db } from '@/data/db';
 import { loadSamplePantry, removeSamplePantry } from '@/data/samplePantry';
 import { useToast } from '@/app/Toast';
 import { newId } from '@/lib/ids';
-import { downscaleImage } from '@/lib/image';
+import { downscaleImage, squareAvatar } from '@/lib/image';
+import { Avatar } from '@/app/Avatar';
 import { useInstall } from '@/app/pwa';
 import { usePrefs } from '@/app/PrefsProvider';
 import {
@@ -48,6 +49,7 @@ export function SettingsPage() {
   const { prefs, update, reset } = usePrefs();
   const { canInstall, installed, install } = useInstall();
   const [bgError, setBgError] = useState<string>();
+  const [avatarError, setAvatarError] = useState<string>();
   const toast = useToast();
   const sampleLots = useLiveQuery(
     () => db.inventoryLots.filter((l) => l.sample === true).count(),
@@ -84,11 +86,65 @@ export function SettingsPage() {
     (v: Prefs[K]) =>
       update({ [k]: v } as Partial<Prefs>);
 
+  const onAvatarFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    try {
+      const { blob, width, height } = await squareAvatar(file);
+      const id = newId();
+      await db.mediaAssets.put({
+        id,
+        kind: 'avatar',
+        mime: blob.type,
+        width,
+        height,
+        blob,
+        createdAt: Date.now(),
+      });
+      if (prefs.avatarId) await db.mediaAssets.delete(prefs.avatarId);
+      update({ avatarId: id });
+      setAvatarError(undefined);
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : 'Could not use that image.');
+    }
+  };
+  const removeAvatar = async () => {
+    if (prefs.avatarId) await db.mediaAssets.delete(prefs.avatarId);
+    update({ avatarId: undefined });
+  };
+
   return (
     <>
       <PageHeader title="Settings" subtitle="Saved on this device only." back="/more" />
       <div className="grid gap-5 lg:grid-cols-2">
         <Group title="Profile">
+          <div className="flex items-center gap-4">
+            <Avatar className="size-20 shrink-0 text-3xl" />
+            <div className="grid gap-2">
+              <Field label="Profile picture" hint="Stays on this device. Cropped to a square.">
+                {(id) => (
+                  <input
+                    id={id}
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={onAvatarFile}
+                    className={inputClass + ' py-2.5'}
+                  />
+                )}
+              </Field>
+              {prefs.avatarId && (
+                <Button variant="ghost" onClick={removeAvatar}>
+                  Remove photo
+                </Button>
+              )}
+            </div>
+          </div>
+          {avatarError && (
+            <p role="alert" className="text-sm text-bad">
+              {avatarError}
+            </p>
+          )}
           <Field label="Your name">
             {(id) => (
               <input

@@ -7,6 +7,8 @@ export interface UnitDef {
   /** multiplier to the dimension's base unit: g for mass, ml for volume, pcs for count */
   factor: number;
   system: 'metric' | 'imperial' | 'both';
+  /** label used when the quantity is not exactly 1 (count units only) */
+  plural?: string;
 }
 
 export const UNITS: UnitDef[] = [
@@ -21,15 +23,54 @@ export const UNITS: UnitDef[] = [
   { id: 'cup', label: 'cup', dimension: 'volume', factor: 236.5882365, system: 'imperial' },
   { id: 'floz', label: 'fl oz', dimension: 'volume', factor: 29.5735295625, system: 'imperial' },
   { id: 'pcs', label: 'pcs', dimension: 'count', factor: 1, system: 'both' },
-  { id: 'pack', label: 'pack', dimension: 'count', factor: 1, system: 'both' },
-  { id: 'can', label: 'can', dimension: 'count', factor: 1, system: 'both' },
-  { id: 'bottle', label: 'bottle', dimension: 'count', factor: 1, system: 'both' },
+  { id: 'pack', label: 'pack', plural: 'packs', dimension: 'count', factor: 1, system: 'both' },
+  { id: 'can', label: 'can', plural: 'cans', dimension: 'count', factor: 1, system: 'both' },
+  {
+    id: 'bottle',
+    label: 'bottle',
+    plural: 'bottles',
+    dimension: 'count',
+    factor: 1,
+    system: 'both',
+  },
+  // Jars come in sizes and a small jar is not a large jar, so each size is its own count unit.
+  {
+    id: 'jar-s',
+    label: 'small jar',
+    plural: 'small jars',
+    dimension: 'count',
+    factor: 1,
+    system: 'both',
+  },
+  {
+    id: 'jar-m',
+    label: 'medium jar',
+    plural: 'medium jars',
+    dimension: 'count',
+    factor: 1,
+    system: 'both',
+  },
+  {
+    id: 'jar-l',
+    label: 'large jar',
+    plural: 'large jars',
+    dimension: 'count',
+    factor: 1,
+    system: 'both',
+  },
 ];
 
 const BY_ID = new Map(UNITS.map((u) => [u.id, u]));
 
 export const unitDef = (id: string): UnitDef | undefined => BY_ID.get(id);
 export const isKnownUnit = (id: string): boolean => BY_ID.has(id);
+/** Display name for a unit id, e.g. 'jar-m' -> 'medium jar'. */
+/** Position in the unit list; used for a natural display order (small < medium < large). */
+export const unitOrder = (id: string): number => {
+  const i = UNITS.findIndex((u) => u.id === id);
+  return i < 0 ? UNITS.length : i;
+};
+export const unitLabel = (id: string): string => BY_ID.get(id)?.label ?? id;
 export const dimensionOf = (id: string): UnitDimension | undefined => BY_ID.get(id)?.dimension;
 
 /**
@@ -47,7 +88,7 @@ export function convert(
   const b = unitDef(to);
   if (!a || !b || !Number.isFinite(quantity)) return null;
   if (from === to) return quantity;
-  // Count units (pcs, pack, can, bottle) are distinct things: never convert between them.
+  // Count units (pcs, pack, can, bottle, jar sizes) are distinct things: never convert between them.
   if (a.dimension === 'count' || b.dimension === 'count') return null;
   if (a.dimension === b.dimension) return (quantity * a.factor) / b.factor;
   if (!densityGPerMl || densityGPerMl <= 0) return null;
@@ -91,7 +132,8 @@ export function formatBase(
 }
 
 export function formatQuantity(quantity: number, unit: string): string {
-  const label = unitDef(unit)?.label ?? unit;
+  const def = unitDef(unit);
+  const label = (quantity !== 1 && def?.plural) || def?.label || unit;
   return `${trim(quantity, 3)} ${label}`;
 }
 

@@ -1,5 +1,5 @@
 import type { DateLabel, Ingredient, InventoryLot, StorageZone, UnitDimension } from '@/data/types';
-import { convert, dimensionOf, tidy } from './units';
+import { convert, dimensionOf, tidy, unitOrder } from './units';
 
 const EPS = 1e-9;
 
@@ -38,7 +38,7 @@ export function totalsFor(lots: Pick<InventoryLot, 'quantity' | 'unit'>[]): Amou
   // Stable, readable order: weight, then volume, then counts ("500 g + 1 l + 3 pcs").
   const rank = { mass: 0, volume: 1, count: 2 } as const;
   return [...map.values()].sort(
-    (a, b) => rank[a.dimension] - rank[b.dimension] || a.key.localeCompare(b.key),
+    (a, b) => rank[a.dimension] - rank[b.dimension] || unitOrder(a.unit) - unitOrder(b.unit),
   );
 }
 

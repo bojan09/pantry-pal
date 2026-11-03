@@ -21,6 +21,8 @@ export const ALLERGENS = [
 export const prefsSchema = z.object({
   onboarded: z.boolean().default(false),
   name: z.string().trim().max(40).default(''),
+  /** id of the profile picture in the mediaAssets table (stored only on this device) */
+  avatarId: z.string().optional(),
   theme: z.enum(THEMES).default('light'),
   accent: z.enum(ACCENTS).default('terracotta'),
   background: z.enum(BACKGROUNDS).default('kitchen'),

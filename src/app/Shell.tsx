@@ -5,6 +5,7 @@ import { Bell, Moon, Search, Sun } from 'lucide-react';
 import { Logo, SidebarArt } from '@/design/illustrations';
 import { cx, IconButton } from '@/design/ui';
 import { BOTTOM_NAV, NAV } from './nav';
+import { Avatar } from './Avatar';
 import { BackgroundLayer } from './BackgroundLayer';
 import { StatusBanner } from './pwa';
 import { usePrefs } from './PrefsProvider';
@@ -17,13 +18,17 @@ function Sidebar() {
       aria-label="Primary"
       className="pp-card sticky top-6 hidden h-[calc(100dvh-3rem)] w-64 shrink-0 flex-col overflow-hidden p-4 lg:flex"
     >
-      <div className="flex items-center gap-3 px-2 pb-5 pt-1">
+      <Link
+        to="/"
+        title="Home"
+        className="mb-4 flex items-center gap-3 rounded-2xl px-2 py-1 hover:bg-surface-2"
+      >
         <Logo className="size-12" />
-        <div>
-          <p className="font-display text-2xl font-semibold leading-none">PantryPal</p>
-          <p className="mt-1 text-xs text-ink-soft">Your Kitchen, Organized</p>
-        </div>
-      </div>
+        <span>
+          <span className="block font-display text-2xl font-semibold leading-none">PantryPal</span>
+          <span className="mt-1 block text-xs text-ink-soft">Your Kitchen, Organized</span>
+        </span>
+      </Link>
       <nav aria-label="Main" className="grid gap-1">
         {NAV.map(({ to, label, icon: Icon }) => (
           <NavLink
@@ -93,12 +98,13 @@ function TopBar() {
       <div className="pp-card flex min-h-12 items-center rounded-full px-5 text-sm font-medium">
         {today}
       </div>
-      <div
-        aria-label={prefs.name ? `Profile: ${prefs.name}` : 'Profile'}
-        className="grid size-12 place-items-center rounded-full bg-accent font-display text-lg font-semibold text-accent-ink"
+      <Link
+        to="/settings"
+        aria-label={prefs.name ? `Profile and settings: ${prefs.name}` : 'Profile and settings'}
+        className="pp-lift size-12 shrink-0 overflow-hidden rounded-full"
       >
-        {(prefs.name || 'P').slice(0, 1).toUpperCase()}
-      </div>
+        <Avatar className="size-12 text-lg" />
+      </Link>
     </div>
   );
 }
@@ -110,13 +116,22 @@ function MobileTopBar() {
         <Logo className="size-9" />
         <span className="font-display text-2xl font-semibold">PantryPal</span>
       </Link>
-      <Link
-        to="/expiring"
-        aria-label="Expiring soon"
-        className="inline-grid size-11 place-items-center rounded-full border border-line bg-surface"
-      >
-        <Bell aria-hidden className="size-5" />
-      </Link>
+      <div className="flex items-center gap-2">
+        <Link
+          to="/expiring"
+          aria-label="Expiring soon"
+          className="inline-grid size-11 place-items-center rounded-full border border-line bg-surface"
+        >
+          <Bell aria-hidden className="size-5" />
+        </Link>
+        <Link
+          to="/settings"
+          aria-label="Profile and settings"
+          className="size-11 shrink-0 overflow-hidden rounded-full"
+        >
+          <Avatar className="size-11" />
+        </Link>
+      </div>
     </div>
   );
 }

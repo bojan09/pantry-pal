@@ -39,6 +39,7 @@ describe('units', () => {
   });
   it('never converts between different count units or count and mass', () => {
     expect(convert(1, 'can', 'pcs')).toBeNull();
+    expect(convert(1, 'jar-s', 'jar-l')).toBeNull();
     expect(convert(2, 'pcs', 'pcs')).toBe(2);
     expect(convert(1, 'pcs', 'g', 1)).toBeNull();
   });
@@ -53,6 +54,10 @@ describe('units', () => {
     expect(formatBase(100, 'mass', 'imperial')).toBe('3.5 oz');
     expect(formatBase(2500, 'volume', 'metric')).toBe('2.5 L');
     expect(formatQuantity(0.1 + 0.2, 'kg')).toBe('0.3 kg');
+    expect(formatQuantity(1, 'jar-m')).toBe('1 medium jar');
+    expect(formatQuantity(3, 'jar-s')).toBe('3 small jars');
+    expect(formatQuantity(2, 'can')).toBe('2 cans');
+    expect(formatQuantity(2, 'pcs')).toBe('2 pcs');
   });
 });
 
@@ -75,8 +80,13 @@ describe('totalsFor', () => {
       lot({ quantity: 2, unit: 'can' }),
     ]);
     expect(t.map((a) => a.key).sort()).toEqual(['count:can', 'count:pcs', 'mass', 'volume']);
-    // display order is weight, volume, then counts
-    expect(t.map((a) => a.key)).toEqual(['mass', 'volume', 'count:can', 'count:pcs']);
+    // display order is weight, volume, then counts in unit-list order
+    expect(
+      totalsFor([lot({ quantity: 1, unit: 'jar-l' }), lot({ quantity: 2, unit: 'jar-s' })]).map(
+        (a) => a.key,
+      ),
+    ).toEqual(['count:jar-s', 'count:jar-l']);
+    expect(t.map((a) => a.key)).toEqual(['mass', 'volume', 'count:pcs', 'count:can']);
   });
 });
 
