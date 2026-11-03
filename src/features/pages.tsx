@@ -1,59 +1,12 @@
-import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { BarChart3, BookOpen, CalendarDays, Clock, Layers, ShoppingCart } from 'lucide-react';
-import { Art, Basket, Sprig, StorageScene, Tomato, type Zone } from '@/design/illustrations';
-import { Card, cx, EmptyState, LinkButton, PageHeader } from '@/design/ui';
+import { BarChart3, BookOpen, CalendarDays, Layers, ShoppingCart } from 'lucide-react';
+import { Art, Sprig, Tomato } from '@/design/illustrations';
+import { Card, EmptyState, LinkButton, PageHeader } from '@/design/ui';
 import { usePrefs } from '@/app/PrefsProvider';
 import { RecipeCard, SampleBanner } from './RecipeCard';
 import { SAMPLE_RECIPES, SAMPLE_WEEK } from './sample';
 import { MORE_ITEMS } from '@/app/nav';
 import { toISODate, weekDays } from '@/lib/dates';
-
-export function PantryPage() {
-  const { prefs } = usePrefs();
-  const [zone, setZone] = useState<Zone>('pantry');
-  return (
-    <>
-      <PageHeader title="My Pantry" subtitle="Everything you have, by shelf." />
-      {prefs.sampleContent && (
-        <div className="mb-4">
-          <SampleBanner />
-        </div>
-      )}
-      <Card>
-        <div
-          role="tablist"
-          aria-label="Storage zone"
-          className="mb-4 inline-flex gap-1 rounded-full bg-surface-2 p-1"
-        >
-          {(['pantry', 'fridge', 'freezer'] as const).map((z) => (
-            <button
-              key={z}
-              role="tab"
-              type="button"
-              aria-selected={zone === z}
-              onClick={() => setZone(z)}
-              className={cx(
-                'min-h-11 rounded-full px-4 text-sm font-semibold capitalize',
-                zone === z ? 'bg-accent text-accent-ink' : 'text-ink-soft hover:text-ink',
-              )}
-            >
-              {z}
-            </button>
-          ))}
-        </div>
-        <StorageScene zone={zone} filled={prefs.sampleContent} className="w-full rounded-2xl" />
-        {!prefs.sampleContent && (
-          <EmptyState
-            art={<Basket />}
-            title="Your pantry is empty"
-            body="Nothing is logged yet. Adding ingredients, quantities and dates arrives in the next release."
-          />
-        )}
-      </Card>
-    </>
-  );
-}
 
 export function RecipesPage() {
   const { prefs } = usePrefs();
@@ -183,21 +136,6 @@ export function ShoppingPage() {
           art={<ShoppingCart aria-hidden className="size-full text-accent-bright" />}
           title="Your list is empty"
           body="Lists generated from your plan and pantry arrive in a later release."
-        />
-      </Card>
-    </>
-  );
-}
-
-export function ExpiringPage() {
-  return (
-    <>
-      <PageHeader title="Expiring Soon" subtitle="Dates you logged, soonest first." back="/more" />
-      <Card>
-        <EmptyState
-          art={<Clock aria-hidden className="size-full text-accent-bright" />}
-          title="Nothing to show"
-          body="Once you log ingredients with use-by or best-before dates, they appear here. Dates and appearance alone do not guarantee food is safe."
         />
       </Card>
     </>

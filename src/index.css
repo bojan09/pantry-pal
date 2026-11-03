@@ -158,8 +158,46 @@
   }
   button,
   a,
-  [role='tab'] {
+  [role='tab'],
+  [role='radio'] {
     -webkit-tap-highlight-color: transparent;
+  }
+  /* Interactive affordances: pointer cursor everywhere something can be clicked */
+  button:not(:disabled),
+  [role='button'],
+  [role='tab'],
+  [role='radio'],
+  a[href],
+  summary,
+  select,
+  label[for],
+  input[type='range'],
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='file'],
+  input[type='file']::file-selector-button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+  /* Press feedback and smooth state changes. Durations scale with the Motion setting (Low = none). */
+  button,
+  [role='tab'],
+  [role='radio'],
+  a[href] {
+    transition:
+      transform calc(160ms * var(--motion-scale)) cubic-bezier(0.34, 1.4, 0.64, 1),
+      background-color calc(160ms * var(--motion-scale)) ease,
+      box-shadow calc(160ms * var(--motion-scale)) ease,
+      filter calc(160ms * var(--motion-scale)) ease,
+      color calc(160ms * var(--motion-scale)) ease,
+      border-color calc(160ms * var(--motion-scale)) ease;
+  }
+  button:not(:disabled):active,
+  [role='tab']:active,
+  [role='radio']:active {
+    transform: scale(0.95);
   }
 }
 
@@ -179,6 +217,11 @@
   }
   :root[data-theme='dark'] .pp-wood {
     filter: brightness(0.45) saturate(0.9);
+  }
+  /* Raised hover for pill buttons and cards that act as buttons */
+  .pp-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px -6px rgb(80 50 20 / 0.35);
   }
   .pp-pattern {
     background-image:

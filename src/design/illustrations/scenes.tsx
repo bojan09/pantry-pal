@@ -396,7 +396,7 @@ export function SidebarArt({ className }: { className?: string }) {
       ].map(([x, y, s], i) => (
         <path
           key={i}
-          d={`M${x} ${y}c${s * 28}-6 ${s * 36}-24 ${s * 34}-38-${s * 18} 2-${s * 34} 14-${s * 34} 38z`}
+          d={`M${x} ${y}c${s * 28} -6 ${s * 36} -24 ${s * 34} -38 ${-s * 18} 2 ${-s * 34} 14 ${-s * 34} 38z`}
           fill={i % 2 ? '#74866B' : '#8FA283'}
         />
       ))}

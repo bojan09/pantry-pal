@@ -39,6 +39,8 @@ export interface InventoryLot extends Stamped {
   cost?: number;
   currency?: string;
   note?: string;
+  /** true for lots created by the labelled sample pantry, so they can be removed in one click */
+  sample?: boolean;
 }
 
 export interface InventoryEvent {
@@ -52,6 +54,8 @@ export interface InventoryEvent {
   /** guards against applying the same cooking session / purchase twice */
   idempotencyKey?: string;
   note?: string;
+  /** the lot as it was before this event (used for undo and audit) */
+  snapshot?: InventoryLot;
 }
 
 export interface Recipe extends Stamped {

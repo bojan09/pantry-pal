@@ -18,10 +18,7 @@ export function MatchPill({ have, total }: { have: number; total: number }) {
 /** Illustrated recipe card; `sample` recipes are labelled by the page banner. */
 export function RecipeCard({ r }: { r: SampleRecipe }) {
   return (
-    <Link
-      to={`/recipes/${r.id}`}
-      className="pp-card group grid gap-3 overflow-hidden p-0 transition hover:-translate-y-0.5"
-    >
+    <Link to={`/recipes/${r.id}`} className="pp-card group grid gap-3 overflow-hidden p-0 pp-lift">
       <div className="relative grid aspect-[4/3] place-items-center bg-gradient-to-br from-oat to-surface-2">
         <Art name={r.art} className="h-[88%] drop-shadow-md" />
         <span
@@ -50,7 +47,7 @@ export function SampleBanner() {
       <span className="rounded-full bg-warn px-2 py-0.5 text-xs font-bold text-warn-soft">
         SAMPLE
       </span>
-      Illustrative content. Turn off in Settings.
+      Sample recipes and meal plan. Turn off in Settings.
     </p>
   );
 }

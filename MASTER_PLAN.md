@@ -1,6 +1,6 @@
 # PantryPal — Master Plan
 
-Status: **APPROVED — Phase 1 delivered, awaiting review. Phases 2–6 pending.**
+Status: **APPROVED — Phases 1–2 delivered. Phases 3–6 pending.**
 Source of truth: `PantryPal_MASTER_PROMPT.md` + `docs/design/reference.webp`.
 
 ## Approved decisions (supersede anything below)

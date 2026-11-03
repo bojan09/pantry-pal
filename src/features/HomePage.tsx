@@ -4,11 +4,16 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { ChevronRight, Search, Sparkles } from 'lucide-react';
 import { db } from '@/data/db';
 import { usePrefs } from '@/app/PrefsProvider';
-import { Art, KitchenBackdrop, Sprig, StorageScene, type Zone } from '@/design/illustrations';
+import { Art, KitchenBackdrop, Sprig, type Zone } from '@/design/illustrations';
+import { colorFor, ItemSprite } from '@/design/illustrations/sprites';
+import { spriteKindFor } from '@/data/catalog';
+import { byFirstExpiring, daysUntil, expiryStatus } from '@/domain/lots';
+import { LivingPantry } from './pantry/LivingPantry';
+import { usePantryData } from './pantry/hooks';
 import { Card, Chip, cx, LinkButton } from '@/design/ui';
 import { addDays, greetingFor, toISODate, weekDays } from '@/lib/dates';
 import { RecipeCard, SampleBanner } from './RecipeCard';
-import { SAMPLE_EXPIRING, SAMPLE_RECIPES, SAMPLE_STATS, SAMPLE_WEEK } from './sample';
+import { SAMPLE_RECIPES, SAMPLE_WEEK } from './sample';
 
 const ZONES: { id: Zone; label: string }[] = [
   { id: 'pantry', label: 'Pantry' },
@@ -38,11 +43,22 @@ export function HomePage() {
   const today = toISODate(now);
   const sample = prefs.sampleContent;
 
-  const lotCount = useLiveQuery(() => db.inventoryLots.count(), [], 0);
   const recipeCount = useLiveQuery(() => db.recipes.count(), [], 0);
-  const stats = sample
-    ? SAMPLE_STATS
-    : { ingredients: lotCount, recipes: recipeCount, expiring: 0, lowStock: 0 };
+  const pantry = usePantryData();
+  const zoneItems = pantry?.byZone(zone) ?? [];
+  const zoneStats = {
+    ingredients: zoneItems.length,
+    expiring: zoneItems.filter((s) => s.status === 'soon' || s.status === 'expired').length,
+    lowStock: zoneItems.filter((s) => s.low).length,
+  };
+  const totalIngredients = pantry?.all.length ?? 0;
+  const totalExpiring =
+    pantry?.all.filter((s) => s.status === 'soon' || s.status === 'expired').length ?? 0;
+  const expiringLots = (pantry?.lots ?? [])
+    .filter((l) => ['soon', 'expired'].includes(expiryStatus(l, pantry!.today, pantry!.leadDays)))
+    .sort(byFirstExpiring)
+    .slice(0, 5);
+  const ingById = new Map((pantry?.ingredients ?? []).map((i) => [i.id, i]));
 
   const hello = `Good ${greetingFor(now)}${prefs.name ? `, ${prefs.name}` : ''}!`;
   const fmt = (d: Date, o: Intl.DateTimeFormatOptions) =>
@@ -72,9 +88,9 @@ export function HomePage() {
           </LinkButton>
           <dl className="grid grid-cols-3 gap-3 text-center">
             {[
-              [stats.ingredients, 'Ingredients'],
-              [stats.recipes, 'Recipes'],
-              [stats.expiring, 'Expiring soon'],
+              [totalIngredients, 'Ingredients'],
+              [recipeCount, 'Recipes'],
+              [totalExpiring, 'Dates to check'],
             ].map(([n, l]) => (
               <div key={l} className="pp-card px-2 py-3">
                 <dd className="font-display text-3xl font-semibold text-accent-text">{n}</dd>
@@ -150,24 +166,32 @@ export function HomePage() {
               ))}
             </div>
           </div>
-          <div className="relative mt-4">
-            <StorageScene zone={zone} filled={sample} className="w-full rounded-2xl" />
-            <div className="mt-3 rounded-2xl bg-charcoal p-4 text-cream md:absolute md:right-4 md:top-4 md:mt-0 md:w-48">
+          <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_12rem]">
+            <LivingPantry
+              zone={zone}
+              items={zoneItems}
+              system={prefs.units}
+              today={pantry?.today ?? ''}
+              leadDays={prefs.expiryLeadDays}
+              onSelect={(id) => navigate(`/pantry/${id}`)}
+              onOverflow={() => navigate('/pantry')}
+            />
+            <div className="rounded-2xl bg-charcoal p-4 text-cream md:self-start">
               <p className="font-display text-xl font-semibold capitalize">{zone}</p>
               <dl className="mt-2 grid grid-cols-3 gap-2 md:grid-cols-1 md:gap-1.5 [&>div]:flex-col [&>div]:items-start md:[&>div]:flex-row md:[&>div]:items-baseline">
                 <div className="flex items-baseline gap-2">
-                  <dd className="font-display text-2xl font-semibold">{stats.ingredients}</dd>
+                  <dd className="font-display text-2xl font-semibold">{zoneStats.ingredients}</dd>
                   <dt className="text-xs text-cream/80">Ingredients</dt>
                 </div>
                 <div className="flex items-baseline gap-2">
                   <dd className="font-display text-2xl font-semibold text-saffron">
-                    {stats.expiring}
+                    {zoneStats.expiring}
                   </dd>
-                  <dt className="text-xs text-cream/80">Expiring soon</dt>
+                  <dt className="text-xs text-cream/80">Dates to check</dt>
                 </div>
                 <div className="flex items-baseline gap-2">
                   <dd className="font-display text-2xl font-semibold text-terracotta">
-                    {stats.lowStock}
+                    {zoneStats.lowStock}
                   </dd>
                   <dt className="text-xs text-cream/80">Low stock</dt>
                 </div>
@@ -218,25 +242,48 @@ export function HomePage() {
               View all
             </Link>
           </div>
-          {sample ? (
+          {expiringLots.length ? (
             <ul className="mt-2 divide-y divide-line">
-              {SAMPLE_EXPIRING.map((e) => (
-                <li key={e.name} className="flex min-h-12 items-center gap-3 py-1.5">
-                  <Art name={e.art} className="size-9 shrink-0" />
-                  <span className="flex-1 font-medium">{e.name}</span>
-                  <span
-                    className={cx(
-                      'text-sm font-semibold',
-                      e.days <= 2 ? 'text-bad' : e.days <= 3 ? 'text-warn' : 'text-ink-soft',
-                    )}
-                  >
-                    {e.days} days
-                  </span>
-                </li>
-              ))}
+              {expiringLots.map((l) => {
+                const ing = ingById.get(l.ingredientId);
+                if (!ing || !l.date) return null;
+                const d = daysUntil(l.date, pantry!.today);
+                return (
+                  <li key={l.id}>
+                    <Link
+                      to={`/pantry/${ing.id}`}
+                      className="flex min-h-12 items-center gap-3 py-1.5"
+                    >
+                      <ItemSprite
+                        name={ing.name}
+                        kind={spriteKindFor(ing)}
+                        color={colorFor(ing.name, ing.id)}
+                        className="h-9 shrink-0"
+                      />
+                      <span className="flex-1 font-medium">{ing.name}</span>
+                      <span
+                        className={cx(
+                          'text-sm font-semibold',
+                          d < 0 ? 'text-bad' : d <= 2 ? 'text-bad' : 'text-warn',
+                        )}
+                      >
+                        {d < 0
+                          ? 'Past date'
+                          : d === 0
+                            ? 'Today'
+                            : `${d} ${d === 1 ? 'day' : 'days'}`}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           ) : (
-            <p className="mt-2 text-ink-soft">Nothing logged with a date yet.</p>
+            <p className="mt-2 text-ink-soft">
+              {pantry?.lots.length
+                ? `Nothing with a date in the next ${prefs.expiryLeadDays} days.`
+                : 'Nothing logged yet.'}
+            </p>
           )}
         </Card>
 

@@ -24,3 +24,16 @@ src/
 ## Licences (runtime deps)
 
 react, react-dom, react-router-dom, dexie, dexie-react-hooks, zod, motion, lucide-react: MIT/Apache-2.0 (ISC for lucide). Fraunces and Inter: SIL OFL 1.1. Illustrations: original, created for this project.
+
+## Phase 2: inventory engine
+
+- **Pure domain** (`src/domain`): `units.ts` (conversion tables, readable formatting) and `lots.ts` (aggregation, expiry status, low stock, FIFO consume planning). No React or Dexie imports, so it is fully unit-tested.
+- **Units.** Mass (g, kg, oz, lb) and volume (ml, L, tsp, tbsp, cup, fl oz) convert within their dimension. Mass to volume converts only with an ingredient density that is stored (about 30 catalog items). Count units (pcs, pack, can, bottle) never convert to each other or to anything else. Anything unsafe returns `null`; totals list incompatible kinds side by side ("1.5 kg + 3 pcs").
+- **Lots, not totals.** Every purchase is a lot with its own zone, date label (use-by / best-before / none), date and optional cost. An ingredient's amount is derived.
+- **Transactions** (`src/data/inventory.ts`): add, edit, consume, transfer, discard, undo and bulk operations each run in one Dexie transaction over lots and events. Consume takes earliest-dated stock first, is all-or-nothing, refuses negative stock and incompatible units, and honours an idempotency key (unique index) so the same cooking session or purchase cannot apply twice. A test forces a failure mid-write and asserts nothing changed.
+- **Undo** restores from the snapshot stored on each event and refuses if the lot changed since, so it cannot create stock.
+- **Catalog.** About 100 ingredients with stable ids (`ing-tomatoes`), seeded once per catalog version, never overwriting user edits. Custom ingredients are supported.
+- **Sample pantry.** Opt-in, 29 lots marked `sample: true` with dates relative to today; removal deletes only those.
+- **Living Pantry** draws one sprite per ingredient in the zone from the logged data. The list view is the full-size accessible alternative.
+- **Expiry wording** never claims safety; use-by and best-before are described differently and every expiry surface carries the caveat.
+- **Routing detail.** The shell uses `useOutlet()` inside `AnimatePresence`. With `<Outlet/>` the incoming page mounted twice and destroyed anything opened in that window.

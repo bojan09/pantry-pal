@@ -3,13 +3,14 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Shell } from './Shell';
 import { usePrefs } from './PrefsProvider';
 import { HomePage } from '@/features/HomePage';
+import { ExpiringPage } from '@/features/pantry/ExpiringPage';
+import { IngredientPage } from '@/features/pantry/IngredientPage';
+import { PantryPage } from '@/features/pantry/PantryPage';
 import {
   AnalyticsPage,
   CollectionsPage,
-  ExpiringPage,
   MorePage,
   NotFoundPage,
-  PantryPage,
   PlannerPage,
   RecipeDetailPage,
   RecipesPage,
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'pantry', element: <PantryPage /> },
+      { path: 'pantry/:id', element: <IngredientPage /> },
       { path: 'recipes', element: <RecipesPage /> },
       { path: 'recipes/:id', element: <RecipeDetailPage /> },
       { path: 'planner', element: <PlannerPage /> },

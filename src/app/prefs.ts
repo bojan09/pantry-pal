@@ -34,6 +34,8 @@ export const prefsSchema = z.object({
   units: z.enum(['metric', 'imperial']).default('metric'),
   currency: z.enum(CURRENCIES).default('MKD'),
   weekStart: z.enum(['monday', 'sunday']).default('monday'),
+  /** how many days ahead counts as "expiring soon" */
+  expiryLeadDays: z.number().int().min(1).max(30).default(7),
   household: z.number().int().min(1).max(20).optional(),
   diets: z.array(z.enum(DIETS)).default([]),
   allergens: z.array(z.enum(ALLERGENS)).default([]),

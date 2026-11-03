@@ -275,7 +275,7 @@ test.describe('sample content', () => {
     await page.getByRole('button', { name: 'Sample content: on' }).click();
     await page.goto('/');
     await expect(page.getByText('SAMPLE')).toHaveCount(0);
-    await expect(page.getByText('Nothing logged with a date yet.')).toBeVisible();
+    await expect(page.getByText('Nothing logged yet.')).toBeVisible();
     await page.goto('/recipes');
     await expect(page.getByText('No recipes yet')).toBeVisible();
   });

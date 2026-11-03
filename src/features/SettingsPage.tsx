@@ -1,6 +1,9 @@
 import { useState, type ChangeEvent } from 'react';
 import { Download } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
+import { loadSamplePantry, removeSamplePantry } from '@/data/samplePantry';
+import { useToast } from '@/app/Toast';
 import { newId } from '@/lib/ids';
 import { downscaleImage } from '@/lib/image';
 import { useInstall } from '@/app/pwa';
@@ -45,6 +48,12 @@ export function SettingsPage() {
   const { prefs, update, reset } = usePrefs();
   const { canInstall, installed, install } = useInstall();
   const [bgError, setBgError] = useState<string>();
+  const toast = useToast();
+  const sampleLots = useLiveQuery(
+    () => db.inventoryLots.filter((l) => l.sample === true).count(),
+    [],
+    0,
+  );
 
   const onBgFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -284,7 +293,57 @@ export function SettingsPage() {
           </div>
         </Group>
 
-        <Group title="Sample content">
+        <Group title="Expiry alerts">
+          <Field
+            label="“Soon” means within (days)"
+            hint="Items with a date this close show up under Expiring Soon."
+          >
+            {(id) => (
+              <input
+                id={id}
+                type="number"
+                inputMode="numeric"
+                min={1}
+                max={30}
+                className={inputClass}
+                value={prefs.expiryLeadDays}
+                onChange={(e) => {
+                  const n = Math.round(Number(e.target.value));
+                  if (n >= 1 && n <= 30) update({ expiryLeadDays: n });
+                }}
+              />
+            )}
+          </Field>
+        </Group>
+
+        <Group title="Sample pantry">
+          <p className="text-sm text-ink-soft">
+            Adds about 30 clearly-marked sample items (&ldquo;Sample item&rdquo; note) so you can
+            try the pantry. They are real records in your local database until removed, and removal
+            leaves your own items untouched.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="ghost"
+              onClick={async () =>
+                toast({ message: `Loaded ${await loadSamplePantry()} sample items` })
+              }
+            >
+              Load sample pantry
+            </Button>
+            <Button
+              variant="ghost"
+              disabled={sampleLots === 0}
+              onClick={async () =>
+                toast({ message: `Removed ${await removeSamplePantry()} sample items` })
+              }
+            >
+              Remove sample items{sampleLots ? ` (${sampleLots})` : ''}
+            </Button>
+          </div>
+        </Group>
+
+        <Group title="Sample recipes & plan">
           <p className="text-sm text-ink-soft">
             Shows illustrative recipes, expiring items and a meal plan, clearly labelled SAMPLE, so
             you can preview the app. It is not stored and never counted as your data.

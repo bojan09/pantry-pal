@@ -12,7 +12,7 @@ const variants: Record<Variant, string> = {
   danger: 'bg-bad text-white hover:brightness-110',
 };
 const base =
-  'inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none';
+  'pp-lift inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold disabled:opacity-50 disabled:pointer-events-none';
 
 export function Button({
   variant = 'primary',
@@ -42,7 +42,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       className={cx(
-        'inline-grid size-11 place-items-center rounded-full border border-line bg-surface text-ink transition hover:bg-surface-2 active:scale-95',
+        'pp-lift inline-grid size-11 place-items-center rounded-full border border-line bg-surface text-ink hover:bg-surface-2',
         className,
       )}
       {...rest}
@@ -72,7 +72,7 @@ export function Chip({
       type="button"
       aria-pressed={selected}
       className={cx(
-        'inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium transition',
+        'pp-lift inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium',
         selected
           ? 'border-transparent bg-accent text-accent-ink'
           : 'border-line bg-surface text-ink hover:bg-surface-2',
@@ -108,7 +108,7 @@ export function Segmented<T extends string>({
           aria-checked={o.value === value}
           onClick={() => onChange(o.value)}
           className={cx(
-            'min-h-11 rounded-full px-4 text-sm font-semibold transition',
+            'min-h-11 rounded-full px-4 text-sm font-semibold',
             o.value === value
               ? 'bg-accent text-accent-ink shadow-sm'
               : 'text-ink-soft hover:text-ink',

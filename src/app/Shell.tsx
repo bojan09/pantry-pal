@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate, useOutlet } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
 import { Bell, Moon, Search, Sun } from 'lucide-react';
 import { Logo, SidebarArt } from '@/design/illustrations';
@@ -15,7 +15,7 @@ function Sidebar() {
   return (
     <aside
       aria-label="Primary"
-      className="pp-card sticky top-4 hidden h-[calc(100dvh-2rem)] w-64 shrink-0 flex-col overflow-hidden p-4 lg:flex"
+      className="pp-card sticky top-6 hidden h-[calc(100dvh-3rem)] w-64 shrink-0 flex-col overflow-hidden p-4 lg:flex"
     >
       <div className="flex items-center gap-3 px-2 pb-5 pt-1">
         <Logo className="size-12" />
@@ -32,7 +32,7 @@ function Sidebar() {
             end={to === '/'}
             className={({ isActive }) =>
               cx(
-                'flex min-h-11 items-center gap-3 rounded-2xl px-4 text-[15px] font-medium transition',
+                'flex min-h-11 items-center gap-3 rounded-2xl px-4 text-[15px] font-medium hover:translate-x-0.5',
                 isActive ? 'bg-accent text-accent-ink shadow-sm' : 'text-ink hover:bg-surface-2',
               )
             }
@@ -152,6 +152,9 @@ function BottomNav() {
 
 export function Shell() {
   const { pathname } = useLocation();
+  // useOutlet (not <Outlet/>) gives AnimatePresence a frozen element per route, so the
+  // exiting wrapper keeps the OLD page instead of re-rendering with the new one (double mount).
+  const outlet = useOutlet();
   return (
     <>
       <BackgroundLayer />
@@ -161,7 +164,7 @@ export function Shell() {
       >
         Skip to content
       </a>
-      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 pb-28 pt-4 safe-top sm:px-6 lg:px-6 lg:pb-8">
+      <div className="mx-auto flex max-w-[1500px] gap-6 px-4 pb-28 pt-[max(1.5rem,env(safe-area-inset-top))] sm:px-6 lg:px-6 lg:pb-8">
         <Sidebar />
         <main id="main" className="min-w-0 flex-1">
           <TopBar />
@@ -174,7 +177,7 @@ export function Shell() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.18 }}
             >
-              <Outlet />
+              {outlet}
             </motion.div>
           </AnimatePresence>
         </main>
