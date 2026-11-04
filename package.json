@@ -12,7 +12,10 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "icons": "node scripts/generate-icons.mjs"
+    "icons": "node scripts/generate-icons.mjs",
+    "check:budget": "node scripts/check-budget.mjs",
+    "licenses": "node scripts/licenses.mjs",
+    "verify": "npm run lint && tsc -b && vitest run && npm run build && npm run check:budget"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

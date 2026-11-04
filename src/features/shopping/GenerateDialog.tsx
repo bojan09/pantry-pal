@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { shopping } from '@/data/shopping';
@@ -89,7 +90,7 @@ export function GenerateDialog({
       });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update the list');
+      setError(errorMessage(e, 'Could not update the list'));
       setBusy(false);
     }
   }

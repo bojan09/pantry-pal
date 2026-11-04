@@ -1,4 +1,6 @@
-import { useState, type ChangeEvent } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
+import { useLocation } from 'react-router-dom';
+import { errorMessage } from '@/data/errors';
 import { Download } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
@@ -19,7 +21,23 @@ import {
   THEMES,
   type Prefs,
 } from '@/app/prefs';
-import { Button, Card, Chip, Field, inputClass, PageHeader, Segmented } from '@/design/ui';
+import {
+  Button,
+  Card,
+  Chip,
+  Field,
+  inputClass,
+  LinkButton,
+  PageHeader,
+  Segmented,
+} from '@/design/ui';
+import { DataSection } from './settings/DataSection';
+import { NotificationHelp } from './settings/NotificationHelp';
+
+const isIos = () =>
+  typeof navigator !== 'undefined' &&
+  (/iphone|ipad|ipod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 const opts = <T extends string>(xs: readonly T[]) =>
@@ -51,6 +69,11 @@ export function SettingsPage() {
   const [bgError, setBgError] = useState<string>();
   const [avatarError, setAvatarError] = useState<string>();
   const toast = useToast();
+  const { hash } = useLocation();
+  // Links like /settings#backup should land on that section.
+  useEffect(() => {
+    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: 'start' });
+  }, [hash]);
   const sampleLots = useLiveQuery(
     () => db.inventoryLots.filter((l) => l.sample === true).count(),
     [],
@@ -77,7 +100,7 @@ export function SettingsPage() {
       update({ background: 'custom', customBackgroundId: id });
       setBgError(undefined);
     } catch (err) {
-      setBgError(err instanceof Error ? err.message : 'Could not use that image.');
+      setBgError(errorMessage(err, 'Could not use that image.'));
     }
   };
 
@@ -106,7 +129,7 @@ export function SettingsPage() {
       update({ avatarId: id });
       setAvatarError(undefined);
     } catch (err) {
-      setAvatarError(err instanceof Error ? err.message : 'Could not use that image.');
+      setAvatarError(errorMessage(err, 'Could not use that image.'));
     }
   };
   const removeAvatar = async () => {
@@ -383,9 +406,13 @@ export function SettingsPage() {
           <div className="flex flex-wrap gap-2">
             <Button
               variant="ghost"
-              onClick={async () =>
-                toast({ message: `Loaded ${await loadSamplePantry()} sample items` })
-              }
+              onClick={async () => {
+                try {
+                  toast({ message: `Loaded ${await loadSamplePantry()} sample items` });
+                } catch (e) {
+                  toast({ message: errorMessage(e), tone: 'error' });
+                }
+              }}
             >
               Load sample pantry
             </Button>
@@ -401,7 +428,13 @@ export function SettingsPage() {
           </div>
         </Group>
 
-        <Group title="App & data">
+        <DataSection />
+
+        <Group title="Reminders and notifications">
+          <NotificationHelp />
+        </Group>
+
+        <Group title="Install and offline">
           {installed ? (
             <p className="text-ink-soft">PantryPal is installed on this device.</p>
           ) : canInstall ? (
@@ -409,24 +442,36 @@ export function SettingsPage() {
               <Download aria-hidden className="size-4" />
               Install PantryPal
             </Button>
+          ) : isIos() ? (
+            <p className="text-ink-soft">
+              On iPhone and iPad: open this page in Safari, tap the Share button, then{' '}
+              <strong>Add to Home Screen</strong>.
+            </p>
           ) : (
             <p className="text-ink-soft">
-              Install is offered by your browser when available (for example via the browser menu →
-              Install app).
+              Your browser offers install when it can: look for an install icon in the address bar,
+              or open the browser menu and choose <strong>Install app</strong>.
             </p>
           )}
           <p className="text-sm text-ink-soft">
-            Your data lives only in this browser. There is no account and no sync, and the browser
-            or OS can clear it. Backup and restore are planned for a later release.
+            After the first visit PantryPal works without a connection, including recipes and the
+            starter cookbook. When a new version is ready you will be asked before it is applied.
           </p>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              reset();
-            }}
-          >
-            Reset preferences
-          </Button>
+        </Group>
+
+        <Group title="About your privacy">
+          <p className="text-sm text-ink-soft">
+            No account, no tracking, no ads, nothing sent anywhere. The details are on the privacy
+            page.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <LinkButton variant="ghost" to="/privacy">
+              Read the privacy page
+            </LinkButton>
+            <Button variant="ghost" onClick={() => reset()}>
+              Reset preferences
+            </Button>
+          </div>
         </Group>
       </div>
     </>

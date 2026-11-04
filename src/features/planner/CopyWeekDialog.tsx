@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { planner } from '@/data/planner';
 import { Button, Dialog, inputClass } from '@/design/ui';
 import { useToast } from '@/app/Toast';
@@ -31,7 +32,7 @@ export function CopyWeekDialog({
             toast({ message: `Copied ${n} meal${n === 1 ? '' : 's'}` });
             onClose();
           } catch (er) {
-            setError(er instanceof Error ? er.message : 'Could not copy the week');
+            setError(errorMessage(er, 'Could not copy the week'));
             setBusy(false);
           }
         }}

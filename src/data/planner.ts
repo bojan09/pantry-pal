@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '@/lib/z';
 import type { PantryDB } from './db';
 import { db as defaultDb } from './db';
 import { InventoryError } from './inventory';

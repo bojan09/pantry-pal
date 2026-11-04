@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ShieldCheck } from 'lucide-react';
 import { Sprig } from '@/design/illustrations';
 import { Card, EmptyState, LinkButton, PageHeader } from '@/design/ui';
 import { MORE_ITEMS } from '@/app/nav';
@@ -19,6 +20,15 @@ export function MorePage() {
             </Link>
           </li>
         ))}
+        <li>
+          <Link
+            to="/privacy"
+            className="pp-card flex min-h-16 items-center gap-4 px-5 text-lg font-medium hover:bg-surface-2"
+          >
+            <ShieldCheck aria-hidden className="size-6 text-accent-text" />
+            Privacy
+          </Link>
+        </li>
       </ul>
     </>
   );

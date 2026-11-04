@@ -1,34 +1,22 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ComponentType } from 'react';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { Shell } from './Shell';
 import { usePrefs } from './PrefsProvider';
 import { HomePage } from '@/features/HomePage';
-import { ExpiringPage } from '@/features/pantry/ExpiringPage';
-import { IngredientPage } from '@/features/pantry/IngredientPage';
-import { PantryPage } from '@/features/pantry/PantryPage';
-import { MorePage, NotFoundPage } from '@/features/pages';
-import { PlannerPage } from '@/features/planner/PlannerPage';
-import { ShoppingPage } from '@/features/shopping/ShoppingPage';
-import { RecipeDetailPage } from '@/features/recipes/RecipeDetailPage';
-import { RecipesPage } from '@/features/recipes/RecipesPage';
 
-const lazyPage = <K extends string>(load: () => Promise<Record<K, React.ComponentType>>, key: K) =>
-  lazy(() => load().then((m) => ({ default: m[key] })));
-const CollectionsPage = lazyPage(
-  () => import('@/features/recipes/CollectionsPage'),
-  'CollectionsPage',
-);
-const AnalyticsPage = lazyPage(() => import('@/features/analytics/AnalyticsPage'), 'AnalyticsPage');
-const CookingPage = lazyPage(() => import('@/features/recipes/CookingPage'), 'CookingPage');
-const HistoryPage = lazyPage(() => import('@/features/recipes/HistoryPage'), 'HistoryPage');
-const RecipeFormPage = lazyPage(
-  () => import('@/features/recipes/RecipeFormPage'),
-  'RecipeFormPage',
-);
+/**
+ * Only the home screen ships in the first download. Every other screen is its own chunk, loaded
+ * on first visit (and precached by the service worker, so it also works offline).
+ */
+const page = <K extends string>(load: () => Promise<Record<K, ComponentType>>, key: K) => {
+  const C = lazy(() => load().then((m) => ({ default: m[key] as ComponentType })));
+  return (
+    <Suspense fallback={null}>
+      <C />
+    </Suspense>
+  );
+};
 
-const SettingsPage = lazy(() =>
-  import('@/features/SettingsPage').then((m) => ({ default: m.SettingsPage })),
-);
 const Onboarding = lazy(() =>
   import('@/features/Onboarding').then((m) => ({ default: m.Onboarding })),
 );
@@ -38,71 +26,59 @@ const router = createBrowserRouter([
     element: <Shell />,
     children: [
       { index: true, element: <HomePage /> },
-      { path: 'pantry', element: <PantryPage /> },
-      { path: 'pantry/:id', element: <IngredientPage /> },
-      { path: 'recipes', element: <RecipesPage /> },
+      { path: 'pantry', element: page(() => import('@/features/pantry/PantryPage'), 'PantryPage') },
+      {
+        path: 'pantry/:id',
+        element: page(() => import('@/features/pantry/IngredientPage'), 'IngredientPage'),
+      },
+      {
+        path: 'recipes',
+        element: page(() => import('@/features/recipes/RecipesPage'), 'RecipesPage'),
+      },
       {
         path: 'recipes/new',
-        element: (
-          <Suspense fallback={null}>
-            <RecipeFormPage />
-          </Suspense>
-        ),
+        element: page(() => import('@/features/recipes/RecipeFormPage'), 'RecipeFormPage'),
       },
-      { path: 'recipes/:id', element: <RecipeDetailPage /> },
+      {
+        path: 'recipes/:id',
+        element: page(() => import('@/features/recipes/RecipeDetailPage'), 'RecipeDetailPage'),
+      },
       {
         path: 'recipes/:id/edit',
-        element: (
-          <Suspense fallback={null}>
-            <RecipeFormPage />
-          </Suspense>
-        ),
+        element: page(() => import('@/features/recipes/RecipeFormPage'), 'RecipeFormPage'),
       },
       {
         path: 'recipes/:id/cook',
-        element: (
-          <Suspense fallback={null}>
-            <CookingPage />
-          </Suspense>
-        ),
+        element: page(() => import('@/features/recipes/CookingPage'), 'CookingPage'),
       },
       {
         path: 'history',
-        element: (
-          <Suspense fallback={null}>
-            <HistoryPage />
-          </Suspense>
-        ),
+        element: page(() => import('@/features/recipes/HistoryPage'), 'HistoryPage'),
       },
-      { path: 'planner', element: <PlannerPage /> },
-      { path: 'shopping', element: <ShoppingPage /> },
-      { path: 'expiring', element: <ExpiringPage /> },
+      {
+        path: 'planner',
+        element: page(() => import('@/features/planner/PlannerPage'), 'PlannerPage'),
+      },
+      {
+        path: 'shopping',
+        element: page(() => import('@/features/shopping/ShoppingPage'), 'ShoppingPage'),
+      },
+      {
+        path: 'expiring',
+        element: page(() => import('@/features/pantry/ExpiringPage'), 'ExpiringPage'),
+      },
       {
         path: 'analytics',
-        element: (
-          <Suspense fallback={null}>
-            <AnalyticsPage />
-          </Suspense>
-        ),
+        element: page(() => import('@/features/analytics/AnalyticsPage'), 'AnalyticsPage'),
       },
       {
         path: 'collections',
-        element: (
-          <Suspense fallback={null}>
-            <CollectionsPage />
-          </Suspense>
-        ),
+        element: page(() => import('@/features/recipes/CollectionsPage'), 'CollectionsPage'),
       },
-      {
-        path: 'settings',
-        element: (
-          <Suspense fallback={null}>
-            <SettingsPage />
-          </Suspense>
-        ),
-      },
-      { path: 'more', element: <MorePage /> },
-      { path: '*', element: <NotFoundPage /> },
+      { path: 'settings', element: page(() => import('@/features/SettingsPage'), 'SettingsPage') },
+      { path: 'privacy', element: page(() => import('@/features/PrivacyPage'), 'PrivacyPage') },
+      { path: 'more', element: page(() => import('@/features/pages'), 'MorePage') },
+      { path: '*', element: page(() => import('@/features/pages'), 'NotFoundPage') },
     ],
   },
 ]);

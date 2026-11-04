@@ -10,6 +10,14 @@ export default tseslint.config(
     files: ['**/*.{ts,tsx}'],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
     plugins: { 'react-hooks': reactHooks },
-    rules: { ...reactHooks.configs.recommended.rules },
+    rules: {
+      ...reactHooks.configs.recommended.rules,
+      // zod must be configured (no eval) before any schema exists: always import it from here.
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ name: 'zod', message: "Import { z } from '@/lib/z' (eval-free zod)." }] },
+      ],
+    },
   },
+  { files: ['src/lib/z.ts'], rules: { 'no-restricted-imports': 'off' } },
 );

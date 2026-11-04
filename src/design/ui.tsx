@@ -9,7 +9,7 @@ const variants: Record<Variant, string> = {
   primary: 'bg-accent text-accent-ink hover:bg-accent-hover shadow-sm',
   soft: 'bg-accent-soft text-accent-text hover:brightness-95',
   ghost: 'bg-transparent text-ink hover:bg-surface-2 border border-line',
-  danger: 'bg-bad text-white hover:brightness-110',
+  danger: 'bg-bad text-bad-ink hover:brightness-110',
 };
 const base =
   'pp-lift inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold disabled:opacity-50 disabled:pointer-events-none';

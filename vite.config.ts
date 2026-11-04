@@ -3,6 +3,16 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+
+// The production security headers live in vercel.json. `vite preview` serves the same ones, so
+// every browser test runs under the real Content-Security-Policy.
+const vercel = JSON.parse(readFileSync(new URL('./vercel.json', import.meta.url), 'utf8')) as {
+  headers: { source: string; headers: { key: string; value: string }[] }[];
+};
+const securityHeaders = Object.fromEntries(
+  (vercel.headers.find((h) => h.source === '/(.*)')?.headers ?? []).map((h) => [h.key, h.value]),
+);
 
 export default defineConfig({
   plugins: [
@@ -40,6 +50,7 @@ export default defineConfig({
       },
     }),
   ],
+  preview: { headers: securityHeaders },
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   test: {
     environment: 'jsdom',

@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { MotionConfig } from 'motion/react';
+import { LazyMotion, MotionConfig } from 'motion/react';
 import { DEFAULT_PREFS, loadPrefs, savePrefs, type Prefs } from './prefs';
 
 interface PrefsCtx {
@@ -63,9 +63,12 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ prefs, update, reset }), [prefs, update, reset]);
   return (
     <Ctx.Provider value={value}>
-      <MotionConfig reducedMotion={prefs.motion === 'low' ? 'always' : 'user'}>
-        {children}
-      </MotionConfig>
+      {/* The animation engine downloads after the first paint; until then `m.*` renders plain. */}
+      <LazyMotion features={() => import('./motionFeatures').then((x) => x.default)} strict>
+        <MotionConfig reducedMotion={prefs.motion === 'low' ? 'always' : 'user'}>
+          {children}
+        </MotionConfig>
+      </LazyMotion>
     </Ctx.Provider>
   );
 }

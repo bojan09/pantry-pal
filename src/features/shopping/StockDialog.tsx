@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/data/db';
 import { shopping, type StockRow } from '@/data/shopping';
@@ -99,7 +100,7 @@ export function StockDialog({ items, onClose }: { items: ShoppingItem[]; onClose
       });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not update the pantry');
+      setError(errorMessage(e, 'Could not update the pantry'));
       setBusy(false);
     }
   }

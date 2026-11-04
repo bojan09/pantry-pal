@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -24,7 +25,7 @@ import { UNITS, unitsForSystem } from '@/domain/units';
 import { ConfirmDialog } from '../pantry/dialogs';
 import { StockDialog } from './StockDialog';
 
-const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong');
+const errMsg = (e: unknown) => errorMessage(e, 'Something went wrong');
 const money = (n: number, currency: string) => {
   try {
     return new Intl.NumberFormat('en', { style: 'currency', currency }).format(n);

@@ -66,3 +66,12 @@ react, react-dom, react-router-dom, dexie, dexie-react-hooks, zod, motion, lucid
 - `domain/lots.usableLots`: the single rule for which stock counts for matching.
 - `domain/analytics.ts`: pure functions over lots, sessions, events, plans and lists; every chart on the page is one of these.
 - `features/analytics`: lazy route; charts are small SVG/HTML components with text equivalents.
+
+## Phase 6: backup, exports, hardening
+
+- `data/backup.ts`: `exportBackup` (one read transaction, then Blob→base64 outside it), `parseBackup` (size → JSON → format → version → SHA-256 over `data` → zod schema per record → unique ids → references), `preview`, `restore` (single transaction; `replace` or `merge`; merge never overwrites), `wipe`.
+- `data/exports.ts` + `lib/csv.ts`: CSV with BOM, CRLF and spreadsheet-formula neutralising.
+- `data/errors.ts`: one mapping from storage failures (quota, blocked storage) to plain advice.
+- `lib/z.ts`: the only place `zod` is imported (eval-free, so the strict CSP holds). ESLint enforces it.
+- `vercel.json` holds the production headers; `vite.config.ts` reads the same file for `vite preview`, so tests run under the real CSP.
+- First download is the home screen only; every other route is a lazy chunk (precached for offline). The animation engine loads after first paint via `LazyMotion`.

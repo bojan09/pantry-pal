@@ -1,6 +1,6 @@
 import type { PantryDB } from './db';
 import { db as defaultDb } from './db';
-import { createInventory, type LotInput } from './inventory';
+import { createInventory, ensureCatalog, type LotInput } from './inventory';
 import type { DateLabel, StorageZone } from './types';
 import { addDays, toISODate } from '@/lib/dates';
 
@@ -51,23 +51,32 @@ export async function loadSamplePantry(
   database: PantryDB = defaultDb,
   today = new Date(),
 ): Promise<number> {
+  // The ingredient list must exist first (a very early click can beat the start-up seeding).
+  await ensureCatalog(database);
   const inv = createInventory(database);
-  let n = 0;
-  for (const [id, quantity, unit, zone, dateLabel, inDays, low] of ROWS) {
-    const input: LotInput = {
-      ingredientId: `ing-${id}`,
-      quantity,
-      unit,
-      zone,
-      dateLabel,
-      date: inDays == null ? undefined : toISODate(addDays(today, inDays)),
-      lowStockThreshold: low,
-      note: 'Sample item',
-    };
-    await inv.addLot(input, { sample: true });
-    n++;
-  }
-  return n;
+  // All-or-nothing: a failure part-way leaves no half-loaded sample.
+  return database.transaction(
+    'rw',
+    [database.inventoryLots, database.inventoryEvents, database.ingredients],
+    async () => {
+      let n = 0;
+      for (const [id, quantity, unit, zone, dateLabel, inDays, low] of ROWS) {
+        const input: LotInput = {
+          ingredientId: `ing-${id}`,
+          quantity,
+          unit,
+          zone,
+          dateLabel,
+          date: inDays == null ? undefined : toISODate(addDays(today, inDays)),
+          lowStockThreshold: low,
+          note: 'Sample item',
+        };
+        await inv.addLot(input, { sample: true });
+        n++;
+      }
+      return n;
+    },
+  );
 }
 
 export async function removeSamplePantry(database: PantryDB = defaultDb): Promise<number> {

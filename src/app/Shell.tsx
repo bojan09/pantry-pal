@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, NavLink, useLocation, useNavigate, useOutlet } from 'react-router-dom';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { Bell, Moon, Search, Sun } from 'lucide-react';
 import { Logo, SidebarArt } from '@/design/illustrations';
 import { cx, IconButton } from '@/design/ui';
@@ -185,7 +185,7 @@ export function Shell() {
           <TopBar />
           <MobileTopBar />
           <AnimatePresence mode="wait" initial={false}>
-            <motion.div
+            <m.div
               key={pathname}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -193,7 +193,7 @@ export function Shell() {
               transition={{ duration: 0.18 }}
             >
               {outlet}
-            </motion.div>
+            </m.div>
           </AnimatePresence>
         </main>
       </div>

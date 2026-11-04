@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Copy, Repeat, Trash2 } from 'lucide-react';
 import { db } from '@/data/db';
@@ -67,7 +68,7 @@ export function EntryDialog({
       if (done) toast({ message: done });
       onClose();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong');
+      setError(errorMessage(e, 'Something went wrong'));
       setBusy(false);
     }
   }

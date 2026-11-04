@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState, type FormEvent } from 'react';
+import { errorMessage } from '@/data/errors';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ArrowDown, ArrowUp, Camera, ImageOff, Plus, Trash2 } from 'lucide-react';
@@ -136,6 +137,11 @@ function RecipeForm({ id, data }: { id?: string; data?: RecipeDetail }) {
   const [photoPreview, setPhotoPreview] = useState<string>();
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  // Move focus to the message once it exists so screen-reader users hear it.
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   const storedUrl = useMediaUrl(imageId);
   const unitOptions = useMemo(() => {
@@ -177,7 +183,7 @@ function RecipeForm({ id, data }: { id?: string; data?: RecipeDetail }) {
       setPhotoPreview(URL.createObjectURL(out.blob));
       setError(undefined);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not use that image.');
+      setError(errorMessage(e, 'Could not use that image.'));
     }
   }
 
@@ -266,8 +272,7 @@ function RecipeForm({ id, data }: { id?: string; data?: RecipeDetail }) {
       navigate(`/recipes/${rid}`);
     } catch (err) {
       if (newAsset) await db.mediaAssets.delete(newAsset).catch(() => undefined);
-      setError(err instanceof Error ? err.message : 'Could not save the recipe');
-      document.getElementById('form-error')?.focus();
+      setError(errorMessage(err, 'Could not save the recipe'));
     } finally {
       setBusy(false);
     }
@@ -283,7 +288,7 @@ function RecipeForm({ id, data }: { id?: string; data?: RecipeDetail }) {
       <form onSubmit={submit} className="grid gap-5" noValidate>
         {error && (
           <p
-            id="form-error"
+            ref={errorRef}
             tabIndex={-1}
             role="alert"
             className="rounded-2xl bg-bad-soft px-4 py-3 font-medium text-bad"

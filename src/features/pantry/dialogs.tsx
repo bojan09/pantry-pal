@@ -1,9 +1,10 @@
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react';
+import { errorMessage } from '@/data/errors';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { Check, Search } from 'lucide-react';
 import { db } from '@/data/db';
 import { CATEGORIES } from '@/data/catalog';
-import { InventoryError, inventory, lotInputSchema, type LotInput } from '@/data/inventory';
+import { inventory, lotInputSchema, type LotInput } from '@/data/inventory';
 import type { Ingredient, InventoryLot, StorageZone } from '@/data/types';
 import { totalsFor } from '@/domain/lots';
 import { UNITS, unitLabel, unitsForSystem } from '@/domain/units';
@@ -215,9 +216,7 @@ function IngredientPicker({
                   await inventory.createIngredient({ name: q, category, defaultUnit: unit }),
                 );
               } catch (x) {
-                setErr(
-                  x instanceof InventoryError ? x.message : 'Could not create that ingredient',
-                );
+                setErr(errorMessage(x, 'Could not create that ingredient'));
               }
             }}
           >
@@ -304,10 +303,7 @@ export function LotFormDialog({
       onClose();
     } catch (x) {
       setErrors({
-        form:
-          x instanceof InventoryError
-            ? x.message
-            : 'Could not save. Your browser storage may be full.',
+        form: errorMessage(x, 'Could not save. Your browser storage may be full.'),
       });
       setBusy(false);
     }
@@ -561,7 +557,7 @@ export function UseDialog({
       });
       onClose();
     } catch (x) {
-      setErr(x instanceof InventoryError ? x.message : 'Could not update stock');
+      setErr(errorMessage(x, 'Could not update stock'));
     }
   }
   return (
@@ -629,7 +625,7 @@ export function MoveDialog({ lots, onClose }: { lots: InventoryLot[]; onClose: (
       toast({ message: `Moved to ${zone === 'custom' ? custom : ZONE_LABEL[zone]}` });
       onClose();
     } catch (x) {
-      setErr(x instanceof InventoryError ? x.message : 'Could not move');
+      setErr(errorMessage(x, 'Could not move'));
     }
   }
   return (

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { backupDue, snoozeBackupReminder } from '@/app/backupMeta';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { ChevronRight, Search, Sparkles } from 'lucide-react';
 import { db } from '@/data/db';
@@ -10,7 +11,7 @@ import { spriteKindFor } from '@/data/catalog';
 import { byFirstExpiring, daysUntil, expiryStatus } from '@/domain/lots';
 import { LivingPantry } from './pantry/LivingPantry';
 import { usePantryData } from './pantry/hooks';
-import { Card, Chip, cx, LinkButton } from '@/design/ui';
+import { Button, Card, Chip, cx, LinkButton } from '@/design/ui';
 import { addDays, greetingFor, toISODate, weekDays } from '@/lib/dates';
 import { RecipeCard } from './recipes/RecipeCard';
 import { useRecipeLibrary } from './recipes/hooks';
@@ -52,6 +53,10 @@ export function HomePage() {
 
   const pantry = usePantryData();
   const recipeCount = useLiveQuery(() => db.recipes.count(), [], 0);
+  const [hideBackup, setHideBackup] = useState(false);
+  const myRecipes = useLiveQuery(() => db.recipes.filter((r) => !r.isStarter).count(), [], 0);
+  const showBackup =
+    !hideBackup && backupDue((pantry?.lots.length ?? 0) + myRecipes > 0, new Date().getTime());
   const library = useRecipeLibrary();
   const hasStock = (pantry?.lots.length ?? 0) > 0;
   const suggested = (library?.recipes ?? [])
@@ -98,6 +103,34 @@ export function HomePage() {
             <Sprig aria-hidden className="h-20 shrink-0 opacity-90 lg:hidden" />
           </div>
         </div>
+
+        {showBackup && (
+          <Card
+            aria-labelledby="bk-h"
+            className="flex flex-wrap items-center justify-between gap-3 bg-warn-soft"
+          >
+            <div>
+              <h2 id="bk-h" className="text-lg font-semibold">
+                Back up your kitchen
+              </h2>
+              <p className="text-sm text-ink-soft">
+                Your data lives only in this browser, which can clear it. A backup is one file.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <LinkButton to="/settings#backup">Back up now</LinkButton>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  snoozeBackupReminder(7);
+                  setHideBackup(true);
+                }}
+              >
+                Remind me in a week
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Mobile quick actions */}
         <div className="grid gap-4 lg:hidden">

@@ -399,3 +399,10 @@ describe('limits fixed: undo, exact lots', () => {
     expect(await qty('ing-milk')).toBe(1);
   });
 });
+
+describe('recipes without a description', () => {
+  it('still store an empty summary so every recipe has the same shape', async () => {
+    const id = await rec.saveRecipe(mine({ summary: '' }));
+    expect((await db.recipes.get(id))!.summary).toBe('');
+  });
+});

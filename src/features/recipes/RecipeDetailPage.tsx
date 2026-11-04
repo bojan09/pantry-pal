@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Check,
@@ -36,7 +37,7 @@ import { FavoriteButton } from './RecipeCard';
 import { RecipeArt } from './RecipeArt';
 import { useRecipeDetail } from './hooks';
 
-const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong');
+const errMsg = (e: unknown) => errorMessage(e, 'Something went wrong');
 
 function CollectionsDialog({
   recipeId,
@@ -412,7 +413,10 @@ export function RecipeDetailPage() {
                     </span>
                     <span className="flex-1">
                       {ing ? (
-                        <Link to={`/pantry/${ing.id}`} className="hover:underline">
+                        <Link
+                          to={`/pantry/${ing.id}`}
+                          className="inline-flex min-h-11 items-center hover:underline"
+                        >
                           {ing.name}
                         </Link>
                       ) : (

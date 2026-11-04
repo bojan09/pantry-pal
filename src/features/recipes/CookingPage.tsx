@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import {
   Bell,
   Check,
@@ -48,7 +49,7 @@ import { CookedFlourish, useFlourishDelay } from './CookedFlourish';
 import { LotPicker, sumEdits, type LotEdits } from './LotPicker';
 import { useNow, useRecipeDetail, type RecipeDetail } from './hooks';
 
-const errMsg = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong');
+const errMsg = (e: unknown) => errorMessage(e, 'Something went wrong');
 
 /* ------------------------------------------------------------------ */
 /* Finish: confirm what was used                                       */
@@ -649,7 +650,7 @@ export function CookingPage() {
             onPointerCancel={() => (swipe.current = null)}
           >
             <AnimatePresence mode="wait" initial={false}>
-              <motion.div
+              <m.div
                 key={step}
                 initial={{ opacity: 0, x: 28 * dir }}
                 animate={{ opacity: 1, x: 0 }}
@@ -695,7 +696,7 @@ export function CookingPage() {
                     )}
                   </div>
                 )}
-              </motion.div>
+              </m.div>
             </AnimatePresence>
             <div className="grid grid-cols-2 gap-3 border-t border-line p-4">
               <Button

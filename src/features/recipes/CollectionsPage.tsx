@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { Link } from 'react-router-dom';
 import { Layers, Pencil, Plus, Trash2 } from 'lucide-react';
 import { recipes as repo } from '@/data/recipes';
@@ -33,7 +34,7 @@ function NameDialog({
             await onSave(name);
             onClose();
           } catch (er) {
-            setErr(er instanceof Error ? er.message : 'Could not save');
+            setErr(errorMessage(er, 'Could not save'));
           }
         }}
       >

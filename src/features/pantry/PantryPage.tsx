@@ -362,7 +362,7 @@ export function PantryPage() {
           {sampleCount} sample items are mixed in.{' '}
           <button
             type="button"
-            className="font-semibold text-accent-text underline underline-offset-4"
+            className="inline-flex min-h-11 items-center align-middle font-semibold text-accent-text underline underline-offset-4"
             onClick={async () => {
               const n = await removeSamplePantry();
               toast({ message: `Removed ${n} sample items` });

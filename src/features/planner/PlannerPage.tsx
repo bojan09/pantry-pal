@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import {
@@ -99,7 +100,7 @@ export function PlannerPage() {
       await planner.moveTo(id, to);
     } catch (e) {
       toast({
-        message: e instanceof Error ? e.message : 'Could not move that meal',
+        message: errorMessage(e, 'Could not move that meal'),
         tone: 'error',
       });
     }

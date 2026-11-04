@@ -296,3 +296,17 @@ describe('catalog v2: jar units', () => {
     expect(lots.map((l) => `${l.quantity} ${l.unit}`).sort()).toEqual(['1 jar-l', '1 jar-s']);
   });
 });
+
+describe('catalog seeding under concurrency', () => {
+  it('two simultaneous callers never add the same ingredient twice or fail', async () => {
+    const d = new PantryDB('race-' + Math.random());
+    const [a, b] = await Promise.all([ensureCatalog(d), ensureCatalog(d)]);
+    expect(a + b).toBe(CATALOG.length);
+    expect(await d.ingredients.count()).toBe(CATALOG.length);
+  });
+  it('sample pantry loads even before the catalog was seeded, atomically', async () => {
+    const d = new PantryDB('race2-' + Math.random());
+    expect(await loadSamplePantry(d)).toBe(29);
+    expect(await d.inventoryLots.count()).toBe(29);
+  });
+});

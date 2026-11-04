@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '@/lib/z';
 import type { PantryDB } from './db';
 import { db as defaultDb } from './db';
 import { createInventory, InventoryError } from './inventory';
@@ -161,6 +161,7 @@ export function createRecipes(database: PantryDB = defaultDb) {
           createdAt: prev?.createdAt ?? now,
           updatedAt: now,
         }) as Recipe;
+        recipe.summary = v.summary ?? ''; // an empty summary is valid; clean() would drop it
         await database.recipes.put(recipe);
         await database.recipeIngredients.where('recipeId').equals(rid).delete();
         await database.recipeSteps.where('recipeId').equals(rid).delete();

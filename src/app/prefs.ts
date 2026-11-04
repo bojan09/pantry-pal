@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from '@/lib/z';
 
 export const ACCENTS = ['terracotta', 'sage', 'saffron', 'plum'] as const;
 export const BACKGROUNDS = ['kitchen', 'solid', 'pattern', 'botanical', 'custom'] as const;

@@ -36,3 +36,10 @@ Not covered: real-device performance of the shelf animations, screen-reader pass
 
 - Unit: matching (tiers, partial credit, use-soon, past use-by, point deltas, determinism) and analytics (reconciliation of every bucket, undone/cancelled exclusion, currency separation, used-before-date evidence).
 - E2E (`e2e/phase5.spec.ts`, `e2e/limits.spec.ts`): ranking and explanation, allergen/diet filters, past-use-by, analytics totals vs sample data, flourish vs Low/reduce-motion, lazy chunks, axe.
+
+## Phase 6 coverage
+
+- Unit: backup export/parse/preview/restore (round trip, merge vs replace, checksum, forged-checksum structural attacks, reference checks, oversized text, rollback on failure, wipe), CSV escaping and formula neutralising, exports, error messages, planner/recipe additions.
+- E2E (`e2e/release.spec.ts`): backup → delete everything → restore (prefs, data, favourites), rejected files leave data intact, merge, photo round trip across devices, CSV download, privacy/notification/storage UI, backup reminder logic, strict-CSP run of every screen with a network check, hostile text, offline use of every screen, keyboard/focus/dialog smoke, axe in 2 themes × 4 accents on 8 screens, overflow and target-size checks at 9 viewport sizes including landscape.
+- `npm run check:budget`: fails when initial JS, CSS, any lazy chunk or the offline cache grows past the budget.
+- `npm audit --omit=dev`: 0 vulnerabilities at release.

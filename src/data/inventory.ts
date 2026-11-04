@@ -5,7 +5,7 @@ import type { DateLabel, Ingredient, InventoryEvent, InventoryLot, StorageZone }
 import { planConsume } from '@/domain/lots';
 import { convert, dimensionOf, formatQuantity, isKnownUnit, tidy, unitLabel } from '@/domain/units';
 import { newId } from '@/lib/ids';
-import { z } from 'zod';
+import { z } from '@/lib/z';
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const isRealDate = (s: string) => {
@@ -432,28 +432,30 @@ export const inventory = createInventory();
 
 /** Seeds the built-in ingredient catalog once per catalog version. Never overwrites user edits. */
 export async function ensureCatalog(database: PantryDB = defaultDb): Promise<number> {
-  const row = await database.preferences.get('catalogVersion');
-  if (row?.value === CATALOG_VERSION) return 0;
-  const existing = new Map((await database.ingredients.toArray()).map((i) => [i.id, i]));
-  const now = Date.now();
-  const missing = CATALOG.filter((c) => !existing.has(c.id)).map((c) => ({
-    ...c,
-    createdAt: now,
-    updatedAt: now,
-  }));
-  // Built-in items get the current usual unit (e.g. ajvar moved from grams to jars). Custom
-  // ingredients and existing lots are never touched.
-  const refreshed = CATALOG.filter((c) => {
-    const have = existing.get(c.id);
-    return have && !have.isCustom && have.defaultUnit !== c.defaultUnit;
-  });
-  await database.transaction('rw', database.ingredients, database.preferences, async () => {
+  // Everything is read and written inside ONE transaction, so two callers at once (app start
+  // and an early "Load sample pantry", say) cannot both add the same rows.
+  return database.transaction('rw', database.ingredients, database.preferences, async () => {
+    const row = await database.preferences.get('catalogVersion');
+    if (row?.value === CATALOG_VERSION) return 0;
+    const existing = new Map((await database.ingredients.toArray()).map((i) => [i.id, i]));
+    const now = Date.now();
+    const missing = CATALOG.filter((c) => !existing.has(c.id)).map((c) => ({
+      ...c,
+      createdAt: now,
+      updatedAt: now,
+    }));
+    // Built-in items get the current usual unit (e.g. ajvar moved from grams to jars). Custom
+    // ingredients and existing lots are never touched.
+    const refreshed = CATALOG.filter((c) => {
+      const have = existing.get(c.id);
+      return have && !have.isCustom && have.defaultUnit !== c.defaultUnit;
+    });
     if (missing.length) await database.ingredients.bulkAdd(missing);
     for (const c of refreshed)
       await database.ingredients.update(c.id, { defaultUnit: c.defaultUnit, updatedAt: now });
     await database.preferences.put({ key: 'catalogVersion', value: CATALOG_VERSION });
+    return missing.length;
   });
-  return missing.length;
 }
 
 export const dimensionLabel = (unit: string) => dimensionOf(unit) ?? 'count';

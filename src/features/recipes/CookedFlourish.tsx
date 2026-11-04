@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { motion, useReducedMotion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import { Check } from 'lucide-react';
 import { usePrefs } from '@/app/PrefsProvider';
 
@@ -35,14 +35,14 @@ export function CookedFlourish({
   }, [ms]);
   const rich = prefs.motion === 'cinematic';
   return (
-    <motion.div
+    <m.div
       role="status"
       aria-live="polite"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="fixed inset-0 z-[60] grid place-items-center bg-charcoal/70 p-6 backdrop-blur-sm"
     >
-      <motion.div
+      <m.div
         initial={{ scale: 0.85, y: 12 }}
         animate={{ scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 260, damping: 18 }}
@@ -50,7 +50,7 @@ export function CookedFlourish({
       >
         <svg viewBox="0 0 120 60" aria-hidden className="absolute -top-10 h-16 w-28">
           {[28, 60, 92].map((x, i) => (
-            <motion.path
+            <m.path
               key={x}
               d={`M${x} 56c-8-8 8-14 0-24s8-14 0-22`}
               fill="none"
@@ -70,7 +70,7 @@ export function CookedFlourish({
         <p className="text-ink-soft">{name} is in your cooking history.</p>
         {rich &&
           [0, 1, 2, 3, 4, 5].map((i) => (
-            <motion.span
+            <m.span
               key={i}
               aria-hidden
               className="absolute size-2 rounded-full bg-saffron"
@@ -80,7 +80,7 @@ export function CookedFlourish({
               transition={{ duration: 1.3, delay: 0.1 + i * 0.08 }}
             />
           ))}
-      </motion.div>
-    </motion.div>
+      </m.div>
+    </m.div>
   );
 }

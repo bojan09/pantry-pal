@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { useNavigate } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { FileUp } from 'lucide-react';
@@ -27,7 +28,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
     try {
       setFile(parseRecipeFile(t));
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not read that recipe');
+      setError(errorMessage(e, 'Could not read that recipe'));
     }
   }
   const unknown = file ? planImport(file, ingredients).unknown : [];
@@ -105,7 +106,7 @@ export function ImportDialog({ onClose }: { onClose: () => void }) {
                 onClose();
                 navigate(`/recipes/${id}`);
               } catch (e) {
-                setError(e instanceof Error ? e.message : 'Could not import');
+                setError(errorMessage(e, 'Could not import'));
                 setBusy(false);
               }
             }}

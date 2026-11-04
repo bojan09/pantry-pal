@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { StorageScene, type Zone } from '@/design/illustrations/scenes';
 import { colorFor, ItemSprite } from '@/design/illustrations/sprites';
 import { spriteKindFor } from '@/data/catalog';
@@ -52,7 +52,7 @@ export function LivingPantry({
 
   return (
     <div className={className}>
-      <motion.div
+      <m.div
         key={zone}
         initial={{ opacity: 0, rotateY: -18 }}
         animate={{ opacity: 1, rotateY: 0 }}
@@ -73,7 +73,7 @@ export function LivingPantry({
                   const name = s.ingredient.name;
                   const label = `${name}, ${formatTotals(s.totals, system)}${s.low ? ', low stock' : ''}. ${s.nextLot ? statusText(s.nextLot, today, leadDays) : ''}`;
                   return (
-                    <motion.button
+                    <m.button
                       key={s.ingredient.id}
                       type="button"
                       layout
@@ -111,7 +111,7 @@ export function LivingPantry({
                           className="absolute -left-0.5 -top-0.5 size-2.5 rounded-full bg-saffron ring-2 ring-white"
                         />
                       )}
-                    </motion.button>
+                    </m.button>
                   );
                 })}
               </AnimatePresence>
@@ -123,7 +123,7 @@ export function LivingPantry({
             Empty shelves. Add an ingredient to fill them.
           </p>
         )}
-      </motion.div>
+      </m.div>
       {extra > 0 && (
         <button
           type="button"

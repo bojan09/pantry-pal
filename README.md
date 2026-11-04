@@ -2,7 +2,7 @@
 
 Offline-first, privacy-first kitchen assistant (PWA): pantry, recipes, cooking mode, meal planner and shopping lists. No account, no backend, no tracking; data lives in your browser (IndexedDB).
 
-**Status:** Phase 5 of 6 done (smart matching, analytics, polish). See `MASTER_PLAN.md` and `docs/PHASE_REPORTS.md`.
+**Status:** all 6 phases delivered. Release report: `docs/RELEASE_REPORT.md`. Plan and history: `MASTER_PLAN.md`, `docs/PHASE_REPORTS.md`. Privacy: `docs/PRIVACY.md`. Deployment: `docs/DEPLOYMENT.md`. Licenses: `docs/LICENSES.md`.
 
 ## Develop
 
@@ -10,7 +10,8 @@ Offline-first, privacy-first kitchen assistant (PWA): pantry, recipes, cooking m
 npm install
 npm run dev          # http://localhost:5173
 npm run typecheck && npm run lint && npm test
-npm run build && npm run test:e2e   # E2E builds + serves the production bundle on :4173
+npm run verify       # lint, typecheck, unit tests, build, bundle budget
+npm run test:e2e     # E2E builds + serves the production bundle (with the real CSP) on :4173
 npm run icons        # regenerate PWA icons (needs Playwright Chromium)
 ```
 
@@ -18,7 +19,7 @@ Node 22+. Playwright is pinned to the version matching the preinstalled Chromium
 
 ## Deploy (Vercel)
 
-Import the repo in Vercel: framework preset **Vite**, build `npm run build`, output `dist`. `vercel.json` rewrites SPA routes to `index.html` and keeps `sw.js` uncached so updates ship. Pushing to `master` deploys production.
+Other hosts and requirements: `docs/DEPLOYMENT.md`. Import the repo in Vercel: framework preset **Vite**, build `npm run build`, output `dist`. `vercel.json` rewrites SPA routes to `index.html` and keeps `sw.js` uncached so updates ship. Pushing to `master` deploys production.
 
 ## Stack
 

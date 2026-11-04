@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { errorMessage } from '@/data/errors';
 import { Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { History, Star } from 'lucide-react';
@@ -121,7 +122,7 @@ export function HistoryPage() {
               await repo.undoCooking(undoing.id);
               toast({ message: 'Undone. Your pantry is back as it was.' });
             } catch (e) {
-              toast({ message: e instanceof Error ? e.message : 'Could not undo', tone: 'error' });
+              toast({ message: errorMessage(e, 'Could not undo'), tone: 'error' });
             }
           }}
         >

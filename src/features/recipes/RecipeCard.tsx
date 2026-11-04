@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { errorMessage } from '@/data/errors';
 import { Heart, Clock, Zap } from 'lucide-react';
 import { recipes as repo } from '@/data/recipes';
 import type { Recipe } from '@/data/types';
@@ -28,7 +29,7 @@ export function FavoriteButton({
         repo
           .setFavorite(recipe.id, !recipe.favorite)
           .catch((e: unknown) =>
-            toast({ message: e instanceof Error ? e.message : 'Could not update', tone: 'error' }),
+            toast({ message: errorMessage(e, 'Could not update'), tone: 'error' }),
           )
       }
       className={`pp-lift grid size-11 place-items-center rounded-full bg-surface/90 text-accent-text shadow ${className}`}

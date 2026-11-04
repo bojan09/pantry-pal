@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, m } from 'motion/react';
 import { Button } from '@/design/ui';
 
 interface ToastItem {
@@ -45,7 +45,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       >
         <AnimatePresence>
           {items.map((t) => (
-            <motion.div
+            <m.div
               key={t.id}
               initial={{ opacity: 0, y: -16, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -64,7 +64,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                   {t.action.label}
                 </Button>
               )}
-            </motion.div>
+            </m.div>
           ))}
         </AnimatePresence>
       </div>

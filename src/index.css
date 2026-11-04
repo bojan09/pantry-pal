@@ -23,6 +23,7 @@
   --warn: #8a5a00;
   --warn-soft: #fbe9c3;
   --bad: #a63a22;
+  --bad-ink: #ffffff;
   --bad-soft: #f8dcd2;
   --shadow: 0 1px 2px rgb(80 50 20 / 0.06), 0 8px 24px -8px rgb(80 50 20 / 0.18);
 
@@ -73,6 +74,7 @@
   --warn: #f0c978;
   --warn-soft: #43361a;
   --bad: #f0a592;
+  --bad-ink: #2a120c;
   --bad-soft: #4a2a21;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px -8px rgb(0 0 0 / 0.6);
   --accent-soft: #4a2c22;
@@ -121,6 +123,7 @@
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
   --color-bad: var(--bad);
+  --color-bad-ink: var(--bad-ink);
   --color-bad-soft: var(--bad-soft);
   --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
   --font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', sans-serif;
